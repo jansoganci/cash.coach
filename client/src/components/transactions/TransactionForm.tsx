@@ -89,8 +89,26 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
+      // Define an interface for the transaction payload
+      interface TransactionPayload {
+        description: string;
+        amount: number;
+        date: Date;
+        categoryId?: number;
+        notes?: string;
+        currency: string;
+        isIncome: number;
+        isRecurring: boolean;
+        frequency?: string;
+        endDate?: Date;
+        dayOfWeek?: number;
+        dayOfMonth?: number;
+        customDays?: number;
+        [key: string]: any; // Allow additional properties
+      }
+      
       // Convert form values to appropriate types
-      const payload = {
+      const payload: TransactionPayload = {
         description: values.description,
         amount: parseFloat(values.amount),
         date: new Date(values.date),
@@ -104,10 +122,11 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       
       // Add frequency-specific fields if this is a recurring transaction
       if (values.isRecurring && values.frequency) {
-        Object.assign(payload, {
-          frequency: values.frequency,
-          endDate: values.endDate ? new Date(values.endDate) : undefined
-        });
+        payload.frequency = values.frequency;
+        
+        if (values.endDate) {
+          payload.endDate = new Date(values.endDate);
+        }
         
         // Add specific frequency parameters
         if (values.frequency === 'weekly' && values.dayOfWeek) {
