@@ -35,20 +35,22 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    // Get token from localStorage
-    const token = localStorage.getItem("fintrack_auth_token");
+    // Use our auth utility to add auth headers
+    const headers = addAuthHeader();
     
-    // Set headers with authorization token if available
-    const headers: HeadersInit = token ? { "Authorization": `Bearer ${token}` } : {};
-    
-    console.log(`API Request to ${queryKey[0]} with token: ${token ? 'present' : 'missing'}`);
+    console.log(`API Request to ${queryKey[0]} with token: ${getToken() ? 'present' : 'missing'}`);
     
     const res = await fetch(queryKey[0] as string, {
       headers
     });
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+    if (res.status === 401) {
+      // Log auth failure
+      console.log('Authentication failed for request:', queryKey[0]);
+      
+      if (unauthorizedBehavior === "returnNull") {
+        return null;
+      }
     }
 
     await throwIfResNotOk(res);
