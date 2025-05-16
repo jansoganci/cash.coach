@@ -79,10 +79,82 @@ export default {
             height: "0",
           },
         },
+        "flip": {
+          "0%": {
+            transform: "rotateY(0deg)",
+          },
+          "50%": {
+            transform: "rotateY(180deg)",
+          },
+          "100%": {
+            transform: "rotateY(360deg)",
+          },
+        },
+        "dash": {
+          "0%": {
+            strokeDasharray: "1, 150",
+            strokeDashoffset: "0",
+          },
+          "50%": {
+            strokeDasharray: "90, 150",
+            strokeDashoffset: "-35",
+          },
+          "100%": {
+            strokeDasharray: "90, 150",
+            strokeDashoffset: "-124",
+          },
+        },
+        "chart-bar-1": {
+          "0%, 100%": {
+            height: "33.333333%",
+          },
+          "50%": {
+            height: "60%",
+          },
+        },
+        "chart-bar-2": {
+          "0%, 100%": {
+            height: "66.666667%",
+          },
+          "50%": {
+            height: "40%",
+          },
+        },
+        "chart-bar-3": {
+          "0%, 100%": {
+            height: "100%",
+          },
+          "50%": {
+            height: "70%",
+          },
+        },
+        "chart-bar-4": {
+          "0%, 100%": {
+            height: "50%",
+          },
+          "50%": {
+            height: "80%",
+          },
+        },
+        "chart-bar-5": {
+          "0%, 100%": {
+            height: "75%",
+          },
+          "50%": {
+            height: "50%",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "flip": "flip 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite",
+        "dash": "dash 1.5s ease-in-out infinite",
+        "chart-bar-1": "chart-bar-1 1.5s ease-in-out infinite",
+        "chart-bar-2": "chart-bar-2 1.5s ease-in-out infinite 0.2s",
+        "chart-bar-3": "chart-bar-3 1.5s ease-in-out infinite 0.4s",
+        "chart-bar-4": "chart-bar-4 1.5s ease-in-out infinite 0.6s",
+        "chart-bar-5": "chart-bar-5 1.5s ease-in-out infinite 0.8s",
       },
     },
   },

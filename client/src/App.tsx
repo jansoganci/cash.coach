@@ -12,10 +12,12 @@ import Register from "@/pages/auth/register";
 import Upload from "@/pages/upload";
 import Expenses from "@/pages/expenses";
 import Analytics from "@/pages/analytics";
+import SpinnerDemo from "@/pages/spinner-demo";
 import { useAuth } from "./hooks/useAuth";
 import { Suspense, lazy } from "react";
 import MobileNav from "./components/layout/MobileNav";
 import Sidebar from "./components/layout/Sidebar";
+import { DollarSpinner } from "@/components/ui/spinners";
 
 // Protected route component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -32,7 +34,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <div className="h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-16 w-16">
+            <DollarSpinner size="xl" variant="primary" />
+          </div>
+          <p className="text-gray-500">Loading your financial data...</p>
+        </div>
       </div>
     );
   }
@@ -88,6 +95,9 @@ function AppContent() {
             <ProtectedRoute>
               <Analytics />
             </ProtectedRoute>
+          </Route>
+          <Route path="/spinner-demo">
+            <SpinnerDemo />
           </Route>
           <Route component={NotFound} />
         </Switch>
