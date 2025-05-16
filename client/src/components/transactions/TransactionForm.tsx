@@ -9,12 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/useAuth';
 import { Category } from '@shared/schema';
 import { CURRENCIES } from '@shared/schema';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface TransactionFormProps {
   onSuccess?: () => void;
@@ -33,6 +35,13 @@ const formSchema = z.object({
   notes: z.string().optional(),
   currency: z.string().default('USD'),
   transactionType: z.enum(['income', 'expense']),
+  // Recurring transaction fields
+  isRecurring: z.boolean().default(false),
+  frequency: z.enum(['daily', 'weekly', 'monthly', 'custom']).optional(),
+  endDate: z.string().optional(),
+  dayOfWeek: z.string().optional(),
+  dayOfMonth: z.string().optional(),
+  customDays: z.string().optional(),
 });
 
 const TransactionForm: React.FC<TransactionFormProps> = ({ 

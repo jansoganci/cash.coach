@@ -252,14 +252,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   apiRouter.post("/transactions", authenticateJWT, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user.id;
+      const { isRecurring, frequency, endDate, dayOfWeek, dayOfMonth, customDays, ...rawTransactionData } = req.body;
+      
       const transactionData = insertTransactionSchema.parse({
-        ...req.body,
+        ...rawTransactionData,
         userId,
-        date: req.body.date ? new Date(req.body.date) : new Date(),
-        isIncome: req.body.isIncome ? 1 : 0
+        date: rawTransactionData.date ? new Date(rawTransactionData.date) : new Date(),
+        isIncome: rawTransactionData.isIncome ? 1 : 0
       });
       
+      // Create the regular transaction
       const newTransaction = await storage.createTransaction(transactionData);
+      
+      // If it's marked as recurring, also create a recurring transaction record
+      if (isRecurring && frequency) {
+        await storage.createRecurringTransaction({
+          userId,
+          description: transactionData.description,
+          amount: transactionData.amount,
+          categoryId: transactionData.categoryId,
+          currency: transactionData.currency,
+          notes: transactionData.notes,
+          isIncome: transactionData.isIncome,
+          frequency,
+          startDate: transactionData.date,
+          endDate: endDate ? new Date(endDate) : null,
+          dayOfWeek: typeof dayOfWeek === 'number' ? dayOfWeek : null,
+          dayOfMonth: typeof dayOfMonth === 'number' ? dayOfMonth : null,
+          customDays: typeof customDays === 'number' ? customDays : null,
+        });
+      }
+      
       res.status(201).json(newTransaction);
     } catch (error) {
       console.error("Error creating transaction:", error);
@@ -448,6 +471,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
+      res.status(500).json({ message: "Something went wrong" });
+    }
+  });
+
+  // Recurring Transactions routes
+  apiRouter.get("/recurring-transactions", authenticateJWT, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const recurringTransactions = await storage.getRecurringTransactions(userId);
+      res.status(200).json(recurringTransactions);
+    } catch (error) {
+      console.error("Error fetching recurring transactions:", error);
+      res.status(500).json({ message: "Something went wrong" });
+    }
+  });
+
+  apiRouter.get("/recurring-transactions/:id", authenticateJWT, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const id = parseInt(req.params.id);
+      
+      const recurringTransaction = await storage.getRecurringTransactionById(id);
+      
+      if (!recurringTransaction) {
+        return res.status(404).json({ message: "Recurring transaction not found" });
+      }
+      
+      if (recurringTransaction.userId !== userId) {
+        return res.status(403).json({ message: "Not authorized to access this recurring transaction" });
+      }
+      
+      res.status(200).json(recurringTransaction);
+    } catch (error) {
+      console.error("Error fetching recurring transaction:", error);
+      res.status(500).json({ message: "Something went wrong" });
+    }
+  });
+
+  apiRouter.delete("/recurring-transactions/:id", authenticateJWT, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const id = parseInt(req.params.id);
+      
+      const recurringTransaction = await storage.getRecurringTransactionById(id);
+      
+      if (!recurringTransaction) {
+        return res.status(404).json({ message: "Recurring transaction not found" });
+      }
+      
+      if (recurringTransaction.userId !== userId) {
+        return res.status(403).json({ message: "Not authorized to delete this recurring transaction" });
+      }
+      
+      const success = await storage.deleteRecurringTransaction(id);
+      if (success) {
+        res.status(200).json({ message: "Recurring transaction deleted successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to delete recurring transaction" });
+      }
+    } catch (error) {
+      console.error("Error deleting recurring transaction:", error);
+      res.status(500).json({ message: "Something went wrong" });
+    }
+  });
+
+  apiRouter.put("/recurring-transactions/:id", authenticateJWT, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const id = parseInt(req.params.id);
+      
+      const recurringTransaction = await storage.getRecurringTransactionById(id);
+      
+      if (!recurringTransaction) {
+        return res.status(404).json({ message: "Recurring transaction not found" });
+      }
+      
+      if (recurringTransaction.userId !== userId) {
+        return res.status(403).json({ message: "Not authorized to update this recurring transaction" });
+      }
+      
+      // Only allow updating certain fields
+      const { 
+        description, amount, categoryId, currency, notes, isIncome,
+        frequency, endDate, dayOfWeek, dayOfMonth, customDays, isActive
+      } = req.body;
+      
+      const updatedData: Partial<RecurringTransaction> = {};
+      
+      if (description !== undefined) updatedData.description = description;
+      if (amount !== undefined) updatedData.amount = amount;
+      if (categoryId !== undefined) updatedData.categoryId = categoryId;
+      if (currency !== undefined) updatedData.currency = currency;
+      if (notes !== undefined) updatedData.notes = notes;
+      if (isIncome !== undefined) updatedData.isIncome = isIncome ? 1 : 0;
+      if (frequency !== undefined) updatedData.frequency = frequency;
+      if (endDate !== undefined) updatedData.endDate = endDate ? new Date(endDate) : null;
+      if (dayOfWeek !== undefined) updatedData.dayOfWeek = dayOfWeek;
+      if (dayOfMonth !== undefined) updatedData.dayOfMonth = dayOfMonth;
+      if (customDays !== undefined) updatedData.customDays = customDays;
+      if (isActive !== undefined) updatedData.isActive = isActive;
+      
+      const updated = await storage.updateRecurringTransaction(id, updatedData);
+      res.status(200).json(updated);
+    } catch (error) {
+      console.error("Error updating recurring transaction:", error);
+      res.status(500).json({ message: "Something went wrong" });
+    }
+  });
+
+  // Trigger processing of recurring transactions (could be called by a cron job in production)
+  apiRouter.post("/recurring-transactions/process", authenticateJWT, async (req: Request, res: Response) => {
+    try {
+      // Only allow admins to trigger this in a real app
+      const count = await storage.processRecurringTransactions();
+      res.status(200).json({ 
+        message: `Successfully processed recurring transactions`,
+        transactionsGenerated: count
+      });
+    } catch (error) {
+      console.error("Error processing recurring transactions:", error);
       res.status(500).json({ message: "Something went wrong" });
     }
   });
