@@ -62,19 +62,19 @@ export async function processDocument(filePath: string): Promise<OCRResult> {
   
   // For images or PDF fallback, use Tesseract OCR
   try {
-    const worker = await createWorker();
-    await worker.loadLanguage('eng');
-    await worker.initialize('eng');
+    // Create worker with updated API syntax for current Tesseract.js version
+    const worker = await createWorker('eng');
     
-    const { data } = await worker.recognize(filePath);
-    const extractedTransactions = extractTransactionsFromText(data.text);
+    // Directly recognize the file (no need for separate loadLanguage and initialize)
+    const result = await worker.recognize(filePath);
+    const extractedTransactions = extractTransactionsFromText(result.data.text);
     
     await worker.terminate();
     
     return {
-      raw: data.text,
+      raw: result.data.text,
       transactions: extractedTransactions,
-      confidence: data.confidence
+      confidence: result.data.confidence || 0
     };
   } catch (error) {
     console.error("OCR processing error:", error);
