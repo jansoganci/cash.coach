@@ -7,6 +7,7 @@ import SpendingTrends from '@/components/dashboard/SpendingTrends';
 import ExpenseCategories from '@/components/dashboard/ExpenseCategories';
 import RecentTransactions from '@/components/dashboard/RecentTransactions';
 import FinancialInsights from '@/components/dashboard/FinancialInsights';
+import FinancialHealthSnapshot from '@/components/dashboard/FinancialHealthSnapshot';
 import { useAuth } from '@/hooks/useAuth';
 
 const Dashboard: React.FC = () => {
@@ -63,10 +64,13 @@ const Dashboard: React.FC = () => {
         upcomingBills={dashboardData?.upcomingBills || 0}
       />
 
-      {/* Charts section */}
+      {/* Charts and health snapshot section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <SpendingTrends className="lg:col-span-2" />
-        <ExpenseCategories />
+        <div className="space-y-6">
+          <FinancialHealthSnapshot />
+          <ExpenseCategories />
+        </div>
       </div>
 
       {/* Recent transactions */}

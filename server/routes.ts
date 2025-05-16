@@ -452,6 +452,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Financial Health Snapshot API endpoint
+  apiRouter.get("/financial-health", authenticateJWT, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const currency = user.preferredCurrency;
+      
+      // Get monthly spending and income
+      const monthlySpending = await storage.getMonthlySpending(userId, currency);
+      const monthlyIncome = await storage.getMonthlyIncome(userId, currency);
+      
+      // Get user's transactions
+      const transactions = await storage.getTransactions(userId);
+      
+      // Calculate debt-to-income ratio
+      // Normally we would fetch this from credit accounts and loans
+      // This is a simplified calculation using recurring payments marked as debt
+      const debtPayments = transactions
+        .filter(t => {
+          // Get category name from the category ID if available
+          if (t.categoryId) {
+            const category = categories.find(c => c.id === t.categoryId);
+            const categoryName = category?.name?.toLowerCase() || '';
+            return categoryName.includes('debt') || categoryName.includes('loan');
+          }
+          return false;
+        })
+        .reduce((total, t) => total + (t.isIncome ? 0 : t.amount), 0);
+      
+      const debtToIncomeRatio = monthlyIncome > 0 ? 
+        Math.min(1, debtPayments / monthlyIncome) : 0.5;
+      
+      // Calculate savings rate
+      const savingsRate = monthlyIncome > 0 ? 
+        Math.max(0, Math.min(1, (monthlyIncome - monthlySpending) / monthlyIncome)) : 0;
+      
+      // Calculate emergency fund status (comparing savings to 6 months of expenses)
+      // Ideally this would use actual savings account data
+      const savingsTransactions = transactions
+        .filter(t => {
+          if (t.categoryId) {
+            const category = categories.find(c => c.id === t.categoryId);
+            const categoryName = category?.name?.toLowerCase() || '';
+            return categoryName.includes('saving');
+          }
+          return false;
+        })
+        .reduce((total, t) => total + (t.isIncome ? t.amount : -t.amount), 0);
+      
+      const sixMonthsExpenses = monthlySpending * 6;
+      const emergencyFundStatus = sixMonthsExpenses > 0 ? 
+        Math.min(1, savingsTransactions / sixMonthsExpenses) : 0;
+      
+      // Calculate expense ratio (expenses / income)
+      const expenseRatio = monthlyIncome > 0 ? 
+        Math.min(1, monthlySpending / monthlyIncome) : 0.7;
+      
+      // Calculate investment diversity
+      // This is simplified - would normally check different asset classes
+      const investmentCategories = new Set(
+        transactions
+          .filter(t => t.category?.toLowerCase().includes('invest'))
+          .map(t => t.category)
+      );
+      
+      const investmentDiversity = Math.min(1, investmentCategories.size / 5);
+      
+      res.status(200).json({
+        debtToIncomeRatio,
+        savingsRate,
+        emergencyFundStatus,
+        expenseRatio,
+        investmentDiversity,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error fetching financial health data:", error);
+      res.status(500).json({ message: "Something went wrong" });
+    }
+  });
+
   // Let Vite handle static files and client-side routing
   app.use("*", (req, res, next) => {
     // Only handle API routes, let Vite handle the rest
