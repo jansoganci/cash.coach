@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'wouter';
 import { useForm } from 'react-hook-form';
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   username: z.string().min(1, { message: 'Username is required' }),
@@ -18,7 +19,15 @@ const formSchema = z.object({
 const Login: React.FC = () => {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
-  const { login, isLoading } = useAuth();
+  const { user, login, isLoading } = useAuth();
+  const { toast } = useToast();
+
+  // Redirect to dashboard if user is already logged in
+  useEffect(() => {
+    if (user) {
+      setLocation('/');
+    }
+  }, [user, setLocation]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -31,7 +40,12 @@ const Login: React.FC = () => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       await login(values.username, values.password);
-      setLocation('/');
+      toast({
+        title: "Login successful",
+        description: "Redirecting to dashboard...",
+      });
+      // Force redirect to dashboard
+      window.location.href = '/';
     } catch (error) {
       // Error handling is done in AuthContext
     }
