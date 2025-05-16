@@ -69,12 +69,14 @@ export class MemStorage implements IStorage {
   private transactions: Map<number, Transaction>;
   private documents: Map<number, Document>;
   private exchangeRates: Map<number, ExchangeRate>;
+  private recurringTransactions: Map<number, RecurringTransaction>;
   
   private currentUserId: number;
   private currentCategoryId: number;
   private currentTransactionId: number;
   private currentDocumentId: number;
   private currentExchangeRateId: number;
+  private currentRecurringTransactionId: number;
 
   constructor() {
     this.users = new Map();
@@ -82,12 +84,14 @@ export class MemStorage implements IStorage {
     this.transactions = new Map();
     this.documents = new Map();
     this.exchangeRates = new Map();
+    this.recurringTransactions = new Map();
     
     this.currentUserId = 1;
     this.currentCategoryId = 1;
     this.currentTransactionId = 1;
     this.currentDocumentId = 1;
     this.currentExchangeRateId = 1;
+    this.currentRecurringTransactionId = 1;
     
     // Initialize with mock exchange rates
     this.initializeExchangeRates();
@@ -414,6 +418,215 @@ export class DatabaseStorage implements IStorage {
       .where(eq(transactions.id, id))
       .returning();
     return !!deletedTransaction;
+  }
+  
+  // Recurring Transaction methods
+  async getRecurringTransactions(userId: number): Promise<RecurringTransaction[]> {
+    return db
+      .select()
+      .from(recurringTransactions)
+      .where(eq(recurringTransactions.userId, userId))
+      .orderBy(desc(recurringTransactions.createdAt));
+  }
+
+  async getRecurringTransactionById(id: number): Promise<RecurringTransaction | undefined> {
+    const [recurringTransaction] = await db
+      .select()
+      .from(recurringTransactions)
+      .where(eq(recurringTransactions.id, id));
+    return recurringTransaction;
+  }
+
+  async createRecurringTransaction(insertRecurringTransaction: InsertRecurringTransaction): Promise<RecurringTransaction> {
+    const [recurringTransaction] = await db
+      .insert(recurringTransactions)
+      .values(insertRecurringTransaction)
+      .returning();
+    return recurringTransaction;
+  }
+
+  async updateRecurringTransaction(id: number, data: Partial<RecurringTransaction>): Promise<RecurringTransaction | undefined> {
+    const [updatedRecurringTransaction] = await db
+      .update(recurringTransactions)
+      .set(data)
+      .where(eq(recurringTransactions.id, id))
+      .returning();
+    return updatedRecurringTransaction;
+  }
+
+  async deleteRecurringTransaction(id: number): Promise<boolean> {
+    const [deletedRecurringTransaction] = await db
+      .delete(recurringTransactions)
+      .where(eq(recurringTransactions.id, id))
+      .returning();
+    return !!deletedRecurringTransaction;
+  }
+
+  // This method will process all active recurring transactions that need to be generated
+  async processRecurringTransactions(): Promise<number> {
+    const allRecurringTransactions = await db
+      .select()
+      .from(recurringTransactions)
+      .where(eq(recurringTransactions.isActive, true));
+    
+    let generatedCount = 0;
+    const currentDate = new Date();
+    
+    for (const recurTrans of allRecurringTransactions) {
+      // Determine the last generated date or use start date if none exists
+      const lastGenDate = recurTrans.lastGeneratedDate || recurTrans.startDate;
+      let nextDates: Date[] = [];
+      
+      // Calculate the next occurrence date(s) based on frequency
+      switch (recurTrans.frequency) {
+        case 'daily':
+          // Check if we need to generate for today
+          if (this.isSameDay(lastGenDate, currentDate)) continue;
+          nextDates = [currentDate];
+          break;
+          
+        case 'weekly':
+          if (this.getDaysDifference(lastGenDate, currentDate) < 7) continue;
+          // Generate all weekly occurrences since last generation
+          nextDates = this.getWeeklyDates(lastGenDate, currentDate, recurTrans.dayOfWeek);
+          break;
+          
+        case 'monthly':
+          // Check if we're in a new month since last generation
+          if (
+            lastGenDate.getMonth() === currentDate.getMonth() && 
+            lastGenDate.getFullYear() === currentDate.getFullYear()
+          ) continue;
+          
+          // Generate monthly occurrences
+          nextDates = this.getMonthlyDates(lastGenDate, currentDate, recurTrans.dayOfMonth || lastGenDate.getDate());
+          break;
+          
+        case 'custom':
+          if (!recurTrans.customDays) continue;
+          // Check if enough days have passed since last generation
+          if (this.getDaysDifference(lastGenDate, currentDate) < recurTrans.customDays) continue;
+          
+          // Generate all custom interval occurrences
+          nextDates = this.getCustomDates(lastGenDate, currentDate, recurTrans.customDays);
+          break;
+      }
+      
+      // Filter out dates beyond the end date if one exists
+      if (recurTrans.endDate) {
+        nextDates = nextDates.filter(date => date <= recurTrans.endDate!);
+      }
+      
+      // Generate the transactions for the calculated dates
+      for (const nextDate of nextDates) {
+        // Create the new transaction
+        const newTransaction: InsertTransaction = {
+          userId: recurTrans.userId,
+          description: recurTrans.description,
+          amount: recurTrans.amount,
+          date: nextDate,
+          categoryId: recurTrans.categoryId,
+          currency: recurTrans.currency,
+          notes: recurTrans.notes ? `${recurTrans.notes} (Recurring)` : '(Recurring)',
+          isIncome: recurTrans.isIncome,
+        };
+        
+        await this.createTransaction(newTransaction);
+        generatedCount++;
+      }
+      
+      // Update the last generated date if we created transactions
+      if (nextDates.length > 0) {
+        const lastGeneratedDate = new Date(Math.max(...nextDates.map(d => d.getTime())));
+        await this.updateRecurringTransaction(recurTrans.id, { lastGeneratedDate });
+      }
+    }
+    
+    return generatedCount;
+  }
+  
+  // Helper methods for date calculations
+  private isSameDay(date1: Date, date2: Date): boolean {
+    return (
+      date1.getFullYear() === date2.getFullYear() &&
+      date1.getMonth() === date2.getMonth() &&
+      date1.getDate() === date2.getDate()
+    );
+  }
+  
+  private getDaysDifference(date1: Date, date2: Date): number {
+    const diffTime = Math.abs(date2.getTime() - date1.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }
+  
+  private getWeeklyDates(startDate: Date, endDate: Date, dayOfWeek?: number | null): Date[] {
+    const dates: Date[] = [];
+    const targetDayOfWeek = dayOfWeek !== undefined && dayOfWeek !== null 
+      ? dayOfWeek 
+      : startDate.getDay();
+    
+    let currentDate = new Date(startDate);
+    
+    // Adjust to the next occurrence of the target day of week
+    while (currentDate.getDay() !== targetDayOfWeek) {
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    // If this is still before the start date, advance a week
+    if (currentDate < startDate) {
+      currentDate.setDate(currentDate.getDate() + 7);
+    }
+    
+    // Add all weekly occurrences until end date
+    while (currentDate <= endDate) {
+      dates.push(new Date(currentDate));
+      currentDate.setDate(currentDate.getDate() + 7);
+    }
+    
+    return dates;
+  }
+  
+  private getMonthlyDates(startDate: Date, endDate: Date, dayOfMonth: number): Date[] {
+    const dates: Date[] = [];
+    let currentDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+    
+    // Move forward to the first month after start date
+    if (currentDate < startDate) {
+      currentDate.setMonth(currentDate.getMonth() + 1);
+    }
+    
+    // Add all monthly occurrences until end date
+    while (currentDate <= endDate) {
+      // Get the correct day, accounting for months with fewer days
+      const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+      const actualDay = Math.min(dayOfMonth, daysInMonth);
+      
+      const occurrenceDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), actualDay);
+      
+      if (occurrenceDate <= endDate && occurrenceDate > startDate) {
+        dates.push(occurrenceDate);
+      }
+      
+      currentDate.setMonth(currentDate.getMonth() + 1);
+    }
+    
+    return dates;
+  }
+  
+  private getCustomDates(startDate: Date, endDate: Date, days: number): Date[] {
+    const dates: Date[] = [];
+    let currentDate = new Date(startDate);
+    
+    // Add the number of custom days to get to the next occurrence
+    currentDate.setDate(currentDate.getDate() + days);
+    
+    // Add all custom day occurrences until end date
+    while (currentDate <= endDate) {
+      dates.push(new Date(currentDate));
+      currentDate.setDate(currentDate.getDate() + days);
+    }
+    
+    return dates;
   }
   
   async getRecentTransactions(userId: number, limit: number): Promise<Transaction[]> {
