@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { getToken } from '@/utils/auth';
 
 const DocumentUpload: React.FC = () => {
   const { t } = useTranslation();
@@ -26,9 +27,10 @@ const DocumentUpload: React.FC = () => {
         xhr.withCredentials = true;
         
         // Add authorization header with JWT token
-        const token = localStorage.getItem('fintrack_auth_token');
+        const token = getToken();
         if (token) {
           xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+          console.log('Auth token added to document upload request');
         } else {
           console.error('No authentication token found');
           reject(new Error('Authentication required'));
