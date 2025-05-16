@@ -312,7 +312,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           <Button 
             type="submit" 
             disabled={mutation.isPending}
-            className={form.watch('transactionType') === 'income' ? 'bg-green-600 hover:bg-green-700' : ''}
+            className={`transition-colors font-medium shadow-sm ${
+              form.watch('transactionType') === 'income' 
+                ? 'bg-green-600 hover:bg-green-700 text-white' 
+                : 'bg-primary-600 hover:bg-primary-700 text-white'
+            }`}
+            size="lg"
           >
             {mutation.isPending ? (
               <>
@@ -320,7 +325,10 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 {t('common.saving')}
               </>
             ) : (
-              initialData ? t('common.update') : t('common.save')
+              <>
+                <i className={`mr-1.5 ${initialData ? 'ri-save-line' : 'ri-add-circle-line'}`}></i>
+                {initialData ? t('common.update') : t('common.save')}
+              </>
             )}
           </Button>
         </div>

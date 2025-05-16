@@ -97,7 +97,8 @@ const Transactions: React.FC = () => {
               setSelectedTransaction(null);
               setIsAddTransactionOpen(true);
             }}
-            className="bg-primary-600 hover:bg-primary-700"
+            size="lg"
+            className="bg-primary-600 hover:bg-primary-700 text-white font-medium shadow-md"
           >
             <i className="ri-add-line mr-1.5"></i>
             {t('transactions.addTransaction')}
@@ -148,15 +149,15 @@ const Transactions: React.FC = () => {
         open={isAddTransactionOpen} 
         onOpenChange={setIsAddTransactionOpen}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-xl">
               {selectedTransaction 
                 ? t('transactions.editTransaction') 
                 : t('transactions.newTransaction')
               }
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-sm">
               {selectedTransaction 
                 ? t('transactions.editTransactionDescription') 
                 : t('transactions.newTransactionDescription')
