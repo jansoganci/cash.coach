@@ -45,11 +45,8 @@ const Login: React.FC = () => {
         description: "Redirecting to dashboard...",
       });
       
-      // Wait a moment for session to be established
-      setTimeout(() => {
-        // Force hard redirect to dashboard to ensure clean state
-        window.location.href = '/';
-      }, 500);
+      // With JWT, we can redirect immediately
+      setLocation('/');
     } catch (error) {
       toast({
         title: "Login failed",

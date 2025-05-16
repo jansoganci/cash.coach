@@ -3,6 +3,9 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+// Token storage key
+const TOKEN_KEY = "fintrack_auth_token";
+
 interface User {
   id: number;
   username: string;
@@ -10,6 +13,7 @@ interface User {
   fullName?: string;
   preferredCurrency: string;
   preferredLanguage: string;
+  token?: string;
 }
 
 interface AuthContextType {
@@ -48,9 +52,23 @@ const AuthContext = createContext<AuthContextType>({
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { toast } = useToast();
+  const [error, setError] = useState<Error | null>(null);
   
-  // Fetch current user
-  const { data: user, isLoading, error, refetch } = useQuery<User | null>({
+  // Check if there's a token in localStorage on component mount
+  useEffect(() => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) {
+      // Force refetch user data if token exists
+      refetch();
+    }
+  }, []);
+  
+  // Fetch current user using JWT token in the header
+  const { 
+    data: user, 
+    isLoading, 
+    refetch 
+  } = useQuery<User | null>({
     queryKey: ["/api/auth/me"],
     retry: false,
     staleTime: Infinity,
@@ -58,11 +76,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refetchInterval: false,
     queryFn: async ({ queryKey }) => {
       try {
-        const res = await fetch(queryKey[0] as string, {
-          credentials: "include",
-        });
+        // Token will be automatically added to headers by the queryFn in queryClient.ts
+        const res = await fetch(queryKey[0] as string);
         
         if (res.status === 401) {
+          // If unauthorized, clear token
+          localStorage.removeItem(TOKEN_KEY);
           return null;
         }
         
@@ -72,93 +91,122 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         return await res.json();
       } catch (error) {
+        console.error("Error fetching user:", error);
         return null;
       }
     }
   });
 
-  // Login mutation with improved session handling
+  // Login mutation
   const loginMutation = useMutation({
     mutationFn: async (credentials: { username: string; password: string }) => {
-      // Use direct fetch with credentials included instead of apiRequest
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(credentials),
-        credentials: "include" // Important for cookies to be sent/received
+        body: JSON.stringify(credentials)
       });
       
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || "Login failed");
+        if (res.status === 401) {
+          throw new Error("Invalid username or password");
+        }
+        throw new Error("An error occurred during login");
       }
       
-      return res.json();
+      return await res.json();
     },
-    onSuccess: (data) => {
-      // Update cached user data
-      queryClient.setQueryData(["/api/auth/me"], data);
+    onSuccess: (userData) => {
+      // Store JWT token in localStorage for persistent login
+      if (userData.token) {
+        localStorage.setItem(TOKEN_KEY, userData.token);
+        console.log("JWT token stored successfully");
+      }
       
-      // Force refetch to ensure we have the latest session data
+      // Refresh user data
       refetch();
       
       toast({
-        title: "Logged in successfully",
-        description: `Welcome back, ${data.username}!`,
+        title: "Login successful",
+        description: `Welcome back, ${userData.username}!`,
       });
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
+      setError(error);
       toast({
         title: "Login failed",
         description: error.message,
         variant: "destructive",
       });
-    }
+    },
   });
 
   // Register mutation
   const registerMutation = useMutation({
     mutationFn: async (userData: RegisterData) => {
-      const res = await apiRequest("POST", "/api/auth/register", userData);
-      return res.json();
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userData)
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Registration failed");
+      }
+      
+      return await res.json();
     },
-    onSuccess: (data) => {
-      queryClient.setQueryData(["/api/auth/me"], data);
+    onSuccess: (userData) => {
+      // Store JWT token
+      if (userData.token) {
+        localStorage.setItem(TOKEN_KEY, userData.token);
+      }
+      
+      // Refresh user data
+      refetch();
+      
       toast({
-        title: "Account created",
-        description: "Your account has been created successfully!",
+        title: "Registration successful",
+        description: "Your account has been created",
       });
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
+      setError(error);
       toast({
         title: "Registration failed",
         description: error.message,
         variant: "destructive",
       });
-    }
+    },
   });
 
   // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/auth/logout");
+      // With JWT we just need to call the logout endpoint to record the logout
+      await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+      
+      // Clear token from localStorage
+      localStorage.removeItem(TOKEN_KEY);
+      
+      // Clear cached data
+      queryClient.clear();
     },
     onSuccess: () => {
-      queryClient.setQueryData(["/api/auth/me"], null);
-      queryClient.invalidateQueries();
+      // Force refetch to clear user state
+      refetch();
+      
       toast({
-        title: "Logged out successfully",
+        title: "Logged out",
+        description: "You have been logged out successfully",
       });
     },
-    onError: () => {
-      toast({
-        title: "Logout failed",
-        description: "There was an error logging out. Please try again.",
-        variant: "destructive",
-      });
-    }
   });
 
   // Update preferences mutation
@@ -167,20 +215,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const res = await apiRequest("PUT", "/api/user/preferences", preferences);
       return res.json();
     },
-    onSuccess: (data) => {
-      queryClient.setQueryData(["/api/auth/me"], data);
+    onSuccess: () => {
+      // Refresh user data
+      refetch();
+      
       toast({
         title: "Preferences updated",
-        description: "Your preferences have been updated successfully!",
+        description: "Your preferences have been updated successfully",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         title: "Update failed",
-        description: "There was an error updating your preferences. Please try again.",
+        description: error.message,
         variant: "destructive",
       });
-    }
+    },
   });
 
   const login = async (username: string, password: string) => {
@@ -204,7 +254,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         isLoading,
-        error: error as Error,
+        error,
         login,
         register,
         logout,
