@@ -110,10 +110,10 @@ const MobileNav: React.FC = () => {
               <span className="text-xs mt-1">{t('mobileNav.dashboard')}</span>
             </div>
           </Link>
-          <Link href="/upload">
-            <div className={`flex flex-col items-center justify-center ${isActive('/upload') ? 'text-primary-600' : 'text-gray-500'}`}>
-              <i className="ri-upload-cloud-line text-xl"></i>
-              <span className="text-xs mt-1">{t('mobileNav.upload')}</span>
+          <Link href="/transactions">
+            <div className={`flex flex-col items-center justify-center ${isActive('/transactions') ? 'text-primary-600' : 'text-gray-500'}`}>
+              <i className="ri-exchange-dollar-line text-xl"></i>
+              <span className="text-xs mt-1">{t('mobileNav.transactions')}</span>
             </div>
           </Link>
           <Link href="/transactions">
@@ -123,10 +123,10 @@ const MobileNav: React.FC = () => {
               </div>
             </div>
           </Link>
-          <Link href="/transactions">
-            <div className={`flex flex-col items-center justify-center ${isActive('/transactions') ? 'text-primary-600' : 'text-gray-500'}`}>
-              <i className="ri-exchange-dollar-line text-xl"></i>
-              <span className="text-xs mt-1">{t('mobileNav.transactions')}</span>
+          <Link href="/recurring">
+            <div className={`flex flex-col items-center justify-center ${isActive('/recurring') ? 'text-primary-600' : 'text-gray-500'}`}>
+              <i className="ri-repeat-line text-xl"></i>
+              <span className="text-xs mt-1">{t('mobileNav.recurring')}</span>
             </div>
           </Link>
           <Link href="/analytics">

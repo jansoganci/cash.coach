@@ -33,6 +33,7 @@
     "expenses": "Expenses",
     "transactions": "Transactions",
     "analytics": "Analytics",
+    "recurring": "Recurring Transactions",
     "reports": "Reports",
     "settings": "Settings",
     "account": "Account",
@@ -44,6 +45,7 @@
     "upload": "Upload",
     "expenses": "Expenses",
     "transactions": "Transactions",
+    "recurring": "Recurring",
     "analytics": "Analytics"
   },
   "dashboard": {
