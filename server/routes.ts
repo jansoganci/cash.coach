@@ -471,6 +471,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get user's transactions
       const transactions = await storage.getTransactions(userId);
       
+      // Get categories for category matching
+      const categories = await storage.getCategories(userId);
+      
       // Calculate debt-to-income ratio
       // Normally we would fetch this from credit accounts and loans
       // This is a simplified calculation using recurring payments marked as debt
@@ -518,8 +521,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // This is simplified - would normally check different asset classes
       const investmentCategories = new Set(
         transactions
-          .filter(t => t.category?.toLowerCase().includes('invest'))
-          .map(t => t.category)
+          .filter(t => {
+            if (t.categoryId) {
+              const category = categories.find(c => c.id === t.categoryId);
+              const categoryName = category?.name?.toLowerCase() || '';
+              return categoryName.includes('invest');
+            }
+            return false;
+          })
+          .map(t => t.categoryId)
       );
       
       const investmentDiversity = Math.min(1, investmentCategories.size / 5);
