@@ -11,6 +11,7 @@ import Login from "@/pages/auth/login";
 import Register from "@/pages/auth/register";
 import Upload from "@/pages/upload";
 import Expenses from "@/pages/expenses";
+import Transactions from "@/pages/transactions";
 import Analytics from "@/pages/analytics";
 import SpinnerDemo from "@/pages/spinner-demo";
 import { useAuth } from "./hooks/useAuth";
@@ -87,6 +88,11 @@ function AppContent() {
           <Route path="/expenses">
             <ProtectedRoute>
               <Expenses />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/transactions">
+            <ProtectedRoute>
+              <Transactions />
             </ProtectedRoute>
           </Route>
           <Route path="/analytics">
