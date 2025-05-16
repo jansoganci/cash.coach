@@ -64,10 +64,10 @@ const MobileNav: React.FC = () => {
                           <span>{t('sidebar.uploadDocuments')}</span>
                         </div>
                       </Link>
-                      <Link href="/expenses">
+                      <Link href="/transactions">
                         <div className="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-100">
-                          <i className="ri-bill-line mr-3 text-lg"></i>
-                          <span>{t('sidebar.expenses')}</span>
+                          <i className="ri-exchange-dollar-line mr-3 text-lg"></i>
+                          <span>{t('sidebar.transactions')}</span>
                         </div>
                       </Link>
                       <Link href="/analytics">
@@ -110,17 +110,17 @@ const MobileNav: React.FC = () => {
               <span className="text-xs mt-1">{t('mobileNav.upload')}</span>
             </div>
           </Link>
-          <Link href="/expenses">
+          <Link href="/transactions">
             <div className="flex flex-col items-center justify-center">
               <div className="h-10 w-10 rounded-full bg-primary-600 flex items-center justify-center text-white shadow-md">
                 <i className="ri-add-line text-xl"></i>
               </div>
             </div>
           </Link>
-          <Link href="/expenses">
-            <div className={`flex flex-col items-center justify-center ${isActive('/expenses') ? 'text-primary-600' : 'text-gray-500'}`}>
-              <i className="ri-bill-line text-xl"></i>
-              <span className="text-xs mt-1">{t('mobileNav.expenses')}</span>
+          <Link href="/transactions">
+            <div className={`flex flex-col items-center justify-center ${isActive('/transactions') ? 'text-primary-600' : 'text-gray-500'}`}>
+              <i className="ri-exchange-dollar-line text-xl"></i>
+              <span className="text-xs mt-1">{t('mobileNav.transactions')}</span>
             </div>
           </Link>
           <Link href="/analytics">

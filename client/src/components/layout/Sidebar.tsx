@@ -41,14 +41,14 @@ const Sidebar: React.FC = () => {
               <span>{t('sidebar.uploadDocuments')}</span>
             </div>
           </Link>
-          <Link href="/expenses">
+          <Link href="/transactions">
             <div className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg ${
-              isActive('/expenses') 
+              isActive('/transactions') 
                 ? 'bg-primary-50 text-primary-700' 
                 : 'text-gray-700 hover:bg-gray-100'
             }`}>
-              <i className="ri-bill-line mr-3 text-lg"></i>
-              <span>{t('sidebar.expenses')}</span>
+              <i className="ri-exchange-dollar-line mr-3 text-lg"></i>
+              <span>{t('sidebar.transactions')}</span>
             </div>
           </Link>
           <Link href="/analytics">
