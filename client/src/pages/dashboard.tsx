@@ -57,10 +57,10 @@ const Dashboard: React.FC = () => {
 
       {/* Financial summary cards */}
       <FinancialSummary 
-        monthlySpending={dashboardData?.summary.monthlySpending || 0}
-        monthlyIncome={dashboardData?.summary.monthlyIncome || 0}
-        savingsRate={dashboardData?.summary.savingsRate || 0}
-        upcomingBills={dashboardData?.summary.upcomingBills || 0}
+        monthlySpending={dashboardData?.monthlySpending || 0}
+        monthlyIncome={dashboardData?.monthlyIncome || 0}
+        savingsRate={dashboardData?.savingsRate || 0}
+        upcomingBills={dashboardData?.upcomingBills || 0}
       />
 
       {/* Charts section */}
