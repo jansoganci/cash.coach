@@ -55,15 +55,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [error, setError] = useState<Error | null>(null);
   const [userState, setUserState] = useState<User | null>(null);
   
-  // Check if there's a token in localStorage on component mount
-  useEffect(() => {
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (token) {
-      // Force refetch user data if token exists
-      refetch();
-    }
-  }, []);
-  
   // Fetch current user using JWT token in the header
   const { 
     data: user, 
@@ -257,10 +248,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await updatePreferencesMutation.mutateAsync(preferences);
   };
 
+  // Ensure the user value is correctly typed
+  const userValue = user === undefined ? null : user;
+
   return (
     <AuthContext.Provider
       value={{
-        user,
+        user: userValue,
         isLoading,
         error,
         login,
