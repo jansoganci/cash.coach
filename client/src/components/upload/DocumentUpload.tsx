@@ -25,6 +25,16 @@ const DocumentUpload: React.FC = () => {
         xhr.open('POST', '/api/documents/upload');
         xhr.withCredentials = true;
         
+        // Add authorization header with JWT token
+        const token = localStorage.getItem('fintrack_auth_token');
+        if (token) {
+          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        } else {
+          console.error('No authentication token found');
+          reject(new Error('Authentication required'));
+          return;
+        }
+        
         // Track upload progress
         xhr.upload.addEventListener('progress', (event) => {
           if (event.lengthComputable) {
