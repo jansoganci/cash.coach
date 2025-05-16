@@ -22,44 +22,44 @@ const Sidebar: React.FC = () => {
       <div className="flex-1 overflow-y-auto px-3 py-2">
         <nav className="space-y-1">
           <Link href="/">
-            <a className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg ${
+            <div className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg ${
               isActive('/') 
                 ? 'bg-primary-50 text-primary-700' 
                 : 'text-gray-700 hover:bg-gray-100'
             }`}>
               <i className="ri-dashboard-line mr-3 text-lg"></i>
               <span>{t('sidebar.dashboard')}</span>
-            </a>
+            </div>
           </Link>
           <Link href="/upload">
-            <a className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg ${
+            <div className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg ${
               isActive('/upload') 
                 ? 'bg-primary-50 text-primary-700' 
                 : 'text-gray-700 hover:bg-gray-100'
             }`}>
               <i className="ri-upload-cloud-line mr-3 text-lg"></i>
               <span>{t('sidebar.uploadDocuments')}</span>
-            </a>
+            </div>
           </Link>
           <Link href="/expenses">
-            <a className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg ${
+            <div className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg ${
               isActive('/expenses') 
                 ? 'bg-primary-50 text-primary-700' 
                 : 'text-gray-700 hover:bg-gray-100'
             }`}>
               <i className="ri-bill-line mr-3 text-lg"></i>
               <span>{t('sidebar.expenses')}</span>
-            </a>
+            </div>
           </Link>
           <Link href="/analytics">
-            <a className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg ${
+            <div className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg ${
               isActive('/analytics') 
                 ? 'bg-primary-50 text-primary-700' 
                 : 'text-gray-700 hover:bg-gray-100'
             }`}>
               <i className="ri-pie-chart-line mr-3 text-lg"></i>
               <span>{t('sidebar.analytics')}</span>
-            </a>
+            </div>
           </Link>
 
           <div className="pt-4 mt-4 border-t border-gray-200">
