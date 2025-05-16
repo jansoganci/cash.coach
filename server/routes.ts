@@ -1,4 +1,4 @@
-import express, { type Express, Request, Response } from "express";
+import express, { type Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
@@ -8,13 +8,19 @@ import fs from "fs";
 import bcrypt from "bcryptjs";
 import session from "express-session";
 import MemoryStore from "memorystore";
+import crypto from "crypto";
 
 // Define custom session properties
 declare module 'express-session' {
   interface SessionData {
     userId: number;
+    username: string;
+    authToken: string;
   }
 }
+
+// Track active tokens for auth validation
+const activeTokens = new Map<string, number>();
 import { 
   insertUserSchema, 
   insertCategorySchema, 
@@ -69,20 +75,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup proxy for secure cookies in production
   app.set('trust proxy', 1);
 
-  // Session middleware with improved configuration
+  // Enhanced session middleware for better persistence
   app.use(
     session({
-      secret: process.env.SESSION_SECRET || "fintrackapp-secret-key",
-      resave: true,
-      rolling: true, // Keep extending the session on activity
-      saveUninitialized: false,
+      secret: process.env.SESSION_SECRET || "fintrackapp-super-secret-key-do-not-share",
+      name: "fintrack.sid", // Custom name to avoid default "connect.sid"
+      resave: true, // Always save session even if unmodified
+      saveUninitialized: false, // Don't create session until something stored
+      rolling: true, // Reset expiration countdown on every response
       store: new MemoryStoreSession({
         checkPeriod: 86400000, // prune expired entries every 24h
       }),
       cookie: {
-        secure: process.env.NODE_ENV === 'production', 
+        secure: false, // Must be false in local development without HTTPS
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         httpOnly: true,
+        path: '/', // Cookie available for all paths
         sameSite: 'lax'
       },
     })
@@ -168,20 +176,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid credentials" });
       }
       
-      // Set session with explicit save to ensure persistence
+      // Set session data
       req.session.userId = user.id;
+      req.session.username = user.username;
       
-      // Save session explicitly to ensure it's stored
+      // Create a more robust way to save the session
       req.session.save((err) => {
         if (err) {
           console.error("Session save error:", err);
-          return res.status(500).json({ message: "Session error" });
+          return res.status(500).json({ message: "Failed to create session" });
         }
         
         // Return user without password
         const { password: _, ...userWithoutPassword } = user;
-        console.log(`User logged in: ${user.username} (ID: ${user.id})`);
-        res.status(200).json(userWithoutPassword);
+        
+        // Add a unique identifier to the response to help with debugging
+        const sessionId = req.sessionID;
+        console.log(`User logged in: ${user.username} (ID: ${user.id}), Session ID: ${sessionId}`);
+        
+        // Include session info in response to help debug
+        res.status(200).json({
+          ...userWithoutPassword,
+          sessionActive: true,
+          timestamp: new Date().toISOString()
+        });
       });
     } catch (error) {
       res.status(500).json({ message: "Something went wrong" });
