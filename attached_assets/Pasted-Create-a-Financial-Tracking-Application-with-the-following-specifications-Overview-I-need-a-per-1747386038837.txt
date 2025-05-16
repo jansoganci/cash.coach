@@ -1,0 +1,67 @@
+Create a Financial Tracking Application with the following specifications:
+
+## Overview
+I need a personal finance tracking application that allows users to upload and analyze their financial documents (bank statements, receipts, etc.), track expenses, and get insights into their spending habits. This is an MVP that will eventually be developed into an iOS app.
+
+## Technical Requirements
+1. **Framework**: Create a web application using Python for the backend with FastAPI, and React + Tailwind CSS for the frontend
+2. **Database**: SQLite for the MVP phase
+3. **Core Features**: 
+   - User account management (signup, login, profile)
+   - Document upload capability (supporting PDF and image formats)
+   - OCR functionality to extract data from uploaded documents (use Tesseract or similar library)
+   - Manual expense entry form
+   - Expense categorization system
+   - Basic dashboard with spending analytics
+   - Multi-currency support (USD, EUR, GBP, JPY, CNY)
+   - Multi-language support (English, Spanish, Chinese, Japanese, German)
+
+## Project Structure
+Please organize the project with the following structure:
+- /app
+  - /backend
+    - /api (FastAPI endpoints)
+    - /models (database models)
+    - /services (OCR, document processing)
+    - /utils (currency conversion, date handling)
+  - /frontend
+    - /components (React components)
+    - /pages (main application pages)
+    - /assets (static files)
+    - /locales (language files)
+  - /tests
+  - main.py (application entry point)
+  - requirements.txt
+
+## Specific Implementation Details
+
+### For the OCR Functionality:
+- Implement a service that can extract transaction data (date, amount, description) from uploaded bank statements and receipts
+- For the MVP, focus on standard formats and implement fallback manual entry when OCR fails
+
+### For Multi-Currency Support:
+- Implement currency storage in the database
+- Create a utility for converting between currencies
+- Display amounts in the user's preferred currency
+
+### For Multi-Language Support:
+- Implement i18n framework in the frontend
+- Create translation files for the 5 supported languages
+- Allow users to switch languages in settings
+
+### User Experience Focus:
+- Clean, minimalist interface
+- Mobile-responsive design
+- Intuitive navigation
+- Clear visualization of financial data
+
+## Development Phases
+1. Set up project structure and core dependencies
+2. Implement user authentication system
+3. Create document upload and basic OCR functionality
+4. Develop expense tracking and categorization
+5. Build dashboard and basic analytics
+6. Implement multi-currency and multi-language support
+7. Finalize responsive UI with Tailwind CSS
+
+Please generate the code for this application, prioritizing a working MVP that demonstrates the core functionality. I'll be using this as a foundation for further development into an iOS app.
