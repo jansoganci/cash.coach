@@ -8,6 +8,13 @@ import fs from "fs";
 import bcrypt from "bcryptjs";
 import session from "express-session";
 import MemoryStore from "memorystore";
+
+// Define custom session properties
+declare module 'express-session' {
+  interface SessionData {
+    userId: number;
+  }
+}
 import { 
   insertUserSchema, 
   insertCategorySchema, 
@@ -59,29 +66,35 @@ const upload = multer({
 const MemoryStoreSession = MemoryStore(session);
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Session middleware
+  // Setup proxy for secure cookies in production
+  app.set('trust proxy', 1);
+
+  // Session middleware with improved configuration
   app.use(
     session({
       secret: process.env.SESSION_SECRET || "fintrackapp-secret-key",
-      resave: false,
+      resave: true,
+      rolling: true, // Keep extending the session on activity
       saveUninitialized: false,
       store: new MemoryStoreSession({
         checkPeriod: 86400000, // prune expired entries every 24h
       }),
       cookie: {
-        secure: false, // Set to false for development
-        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        secure: process.env.NODE_ENV === 'production', 
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         httpOnly: true,
         sameSite: 'lax'
       },
     })
   );
 
-  // Authentication middleware
+  // Authentication middleware with improved debugging
   const isAuthenticated = (req: Request, res: Response, next: Function) => {
     if (req.session && req.session.userId) {
+      console.log(`Authenticated user with ID: ${req.session.userId}`);
       return next();
     }
+    console.log("Authentication failed - no session or userId");
     res.status(401).json({ message: "Unauthorized" });
   };
 
@@ -151,12 +164,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid credentials" });
       }
       
-      // Set session
+      // Set session with explicit save to ensure persistence
       req.session.userId = user.id;
       
-      // Return user without password
-      const { password: _, ...userWithoutPassword } = user;
-      res.status(200).json(userWithoutPassword);
+      // Save session explicitly to ensure it's stored
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ message: "Session error" });
+        }
+        
+        // Return user without password
+        const { password: _, ...userWithoutPassword } = user;
+        console.log(`User logged in: ${user.username} (ID: ${user.id})`);
+        res.status(200).json(userWithoutPassword);
+      });
     } catch (error) {
       res.status(500).json({ message: "Something went wrong" });
     }
