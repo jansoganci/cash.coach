@@ -7,8 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { uploadFormData } from '@/lib/apiClient';
-import { getToken } from '@/utils/auth';
+import { uploadFormData } from '@/lib/formDataUploader';
 
 const DocumentUpload: React.FC = () => {
   const { t } = useTranslation();
@@ -21,7 +20,7 @@ const DocumentUpload: React.FC = () => {
       const formData = new FormData();
       formData.append('file', file);
       
-      // Use the uploadFormData utility to handle file uploads with auth token
+      // Use our utility for multipart uploads with auth token and progress tracking
       return uploadFormData('/api/documents/upload', formData, (progress) => {
         setUploadProgress(progress);
       });
