@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, Link } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,7 +7,11 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 const MobileNav: React.FC = () => {
   const { t } = useTranslation();
   const [location] = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  
+  const handleLogout = useCallback(() => {
+    logout();
+  }, [logout]);
 
   const isActive = (path: string) => {
     return location === path;
@@ -49,37 +53,34 @@ const MobileNav: React.FC = () => {
                     
                     <nav className="space-y-2">
                       <Link href="/">
-                        <a className="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-100">
+                        <div className="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-100">
                           <i className="ri-dashboard-line mr-3 text-lg"></i>
                           <span>{t('sidebar.dashboard')}</span>
-                        </a>
+                        </div>
                       </Link>
                       <Link href="/upload">
-                        <a className="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-100">
+                        <div className="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-100">
                           <i className="ri-upload-cloud-line mr-3 text-lg"></i>
                           <span>{t('sidebar.uploadDocuments')}</span>
-                        </a>
+                        </div>
                       </Link>
                       <Link href="/expenses">
-                        <a className="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-100">
+                        <div className="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-100">
                           <i className="ri-bill-line mr-3 text-lg"></i>
                           <span>{t('sidebar.expenses')}</span>
-                        </a>
+                        </div>
                       </Link>
                       <Link href="/analytics">
-                        <a className="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-100">
+                        <div className="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-100">
                           <i className="ri-pie-chart-line mr-3 text-lg"></i>
                           <span>{t('sidebar.analytics')}</span>
-                        </a>
+                        </div>
                       </Link>
                       
                       <div className="pt-2 mt-2 border-t border-gray-200">
                         <button 
                           className="w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-red-600 hover:bg-red-50"
-                          onClick={() => {
-                            const { logout } = useAuth();
-                            logout();
-                          }}
+                          onClick={handleLogout}
                         >
                           <i className="ri-logout-box-line mr-3 text-lg"></i>
                           <span>{t('sidebar.logout')}</span>
@@ -98,35 +99,35 @@ const MobileNav: React.FC = () => {
       <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 z-20">
         <div className="grid grid-cols-5 h-16">
           <Link href="/">
-            <a className={`flex flex-col items-center justify-center ${isActive('/') ? 'text-primary-600' : 'text-gray-500'}`}>
+            <div className={`flex flex-col items-center justify-center ${isActive('/') ? 'text-primary-600' : 'text-gray-500'}`}>
               <i className="ri-dashboard-line text-xl"></i>
               <span className="text-xs mt-1">{t('mobileNav.dashboard')}</span>
-            </a>
+            </div>
           </Link>
           <Link href="/upload">
-            <a className={`flex flex-col items-center justify-center ${isActive('/upload') ? 'text-primary-600' : 'text-gray-500'}`}>
+            <div className={`flex flex-col items-center justify-center ${isActive('/upload') ? 'text-primary-600' : 'text-gray-500'}`}>
               <i className="ri-upload-cloud-line text-xl"></i>
               <span className="text-xs mt-1">{t('mobileNav.upload')}</span>
-            </a>
+            </div>
           </Link>
           <Link href="/expenses">
-            <a className="flex flex-col items-center justify-center">
+            <div className="flex flex-col items-center justify-center">
               <div className="h-10 w-10 rounded-full bg-primary-600 flex items-center justify-center text-white shadow-md">
                 <i className="ri-add-line text-xl"></i>
               </div>
-            </a>
+            </div>
           </Link>
           <Link href="/expenses">
-            <a className={`flex flex-col items-center justify-center ${isActive('/expenses') ? 'text-primary-600' : 'text-gray-500'}`}>
+            <div className={`flex flex-col items-center justify-center ${isActive('/expenses') ? 'text-primary-600' : 'text-gray-500'}`}>
               <i className="ri-bill-line text-xl"></i>
               <span className="text-xs mt-1">{t('mobileNav.expenses')}</span>
-            </a>
+            </div>
           </Link>
           <Link href="/analytics">
-            <a className={`flex flex-col items-center justify-center ${isActive('/analytics') ? 'text-primary-600' : 'text-gray-500'}`}>
+            <div className={`flex flex-col items-center justify-center ${isActive('/analytics') ? 'text-primary-600' : 'text-gray-500'}`}>
               <i className="ri-pie-chart-line text-xl"></i>
               <span className="text-xs mt-1">{t('mobileNav.analytics')}</span>
-            </a>
+            </div>
           </Link>
         </div>
       </nav>
