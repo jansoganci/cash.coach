@@ -287,4 +287,238 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+import { db } from "./db";
+import { and, eq, desc, gte, sql } from "drizzle-orm";
+
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+  
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+  
+  async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(userData)
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
+  }
+  
+  // Category methods
+  async getCategories(userId: number): Promise<Category[]> {
+    return db
+      .select()
+      .from(categories)
+      .where(eq(categories.userId, userId));
+  }
+  
+  async getCategoryById(id: number): Promise<Category | undefined> {
+    const [category] = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.id, id));
+    return category;
+  }
+  
+  async createCategory(insertCategory: InsertCategory): Promise<Category> {
+    const [category] = await db
+      .insert(categories)
+      .values(insertCategory)
+      .returning();
+    return category;
+  }
+  
+  async initializeDefaultCategories(userId: number): Promise<Category[]> {
+    const userCategories = await this.getCategories(userId);
+    if (userCategories.length > 0) {
+      return userCategories;
+    }
+    
+    const createdCategories: Category[] = [];
+    
+    for (const defaultCategory of DEFAULT_CATEGORIES) {
+      const category = await this.createCategory({
+        ...defaultCategory,
+        userId
+      });
+      createdCategories.push(category);
+    }
+    
+    return createdCategories;
+  }
+  
+  // Transaction methods
+  async getTransactions(userId: number): Promise<Transaction[]> {
+    return db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.userId, userId))
+      .orderBy(desc(transactions.date));
+  }
+  
+  async getTransactionById(id: number): Promise<Transaction | undefined> {
+    const [transaction] = await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.id, id));
+    return transaction;
+  }
+  
+  async createTransaction(insertTransaction: InsertTransaction): Promise<Transaction> {
+    const [transaction] = await db
+      .insert(transactions)
+      .values(insertTransaction)
+      .returning();
+    return transaction;
+  }
+  
+  async updateTransaction(id: number, transactionData: Partial<Transaction>): Promise<Transaction | undefined> {
+    const [updatedTransaction] = await db
+      .update(transactions)
+      .set(transactionData)
+      .where(eq(transactions.id, id))
+      .returning();
+    return updatedTransaction;
+  }
+  
+  async deleteTransaction(id: number): Promise<boolean> {
+    const [deletedTransaction] = await db
+      .delete(transactions)
+      .where(eq(transactions.id, id))
+      .returning();
+    return !!deletedTransaction;
+  }
+  
+  async getRecentTransactions(userId: number, limit: number): Promise<Transaction[]> {
+    return db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.userId, userId))
+      .orderBy(desc(transactions.date))
+      .limit(limit);
+  }
+  
+  async getMonthlySpending(userId: number, currency = 'USD'): Promise<number> {
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    const result = await db
+      .select({
+        total: sql<number>`SUM(${transactions.amount})`
+      })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.userId, userId),
+          eq(transactions.isIncome, 0),
+          gte(transactions.date, firstDayOfMonth),
+          eq(transactions.currency, currency)
+        )
+      );
+      
+    return result[0]?.total || 0;
+  }
+  
+  async getMonthlyIncome(userId: number, currency = 'USD'): Promise<number> {
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    const result = await db
+      .select({
+        total: sql<number>`SUM(${transactions.amount})`
+      })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.userId, userId),
+          eq(transactions.isIncome, 1),
+          gte(transactions.date, firstDayOfMonth),
+          eq(transactions.currency, currency)
+        )
+      );
+      
+    return result[0]?.total || 0;
+  }
+  
+  // Document methods
+  async getDocuments(userId: number): Promise<Document[]> {
+    return db
+      .select()
+      .from(documents)
+      .where(eq(documents.userId, userId))
+      .orderBy(desc(documents.createdAt));
+  }
+  
+  async getDocumentById(id: number): Promise<Document | undefined> {
+    const [document] = await db
+      .select()
+      .from(documents)
+      .where(eq(documents.id, id));
+    return document;
+  }
+  
+  async createDocument(insertDocument: InsertDocument): Promise<Document> {
+    const [document] = await db
+      .insert(documents)
+      .values(insertDocument)
+      .returning();
+    return document;
+  }
+  
+  // Exchange rate methods
+  async getExchangeRates(): Promise<ExchangeRate | undefined> {
+    const [rate] = await db
+      .select()
+      .from(exchangeRates)
+      .orderBy(desc(exchangeRates.lastUpdated))
+      .limit(1);
+    return rate;
+  }
+  
+  async createOrUpdateExchangeRates(data: InsertExchangeRate): Promise<ExchangeRate> {
+    // Try to update first
+    const existing = await this.getExchangeRates();
+    
+    if (existing) {
+      const [updated] = await db
+        .update(exchangeRates)
+        .set({
+          ...data,
+          lastUpdated: new Date()
+        })
+        .where(eq(exchangeRates.id, existing.id))
+        .returning();
+      return updated;
+    }
+    
+    // Insert if no existing record
+    const [created] = await db
+      .insert(exchangeRates)
+      .values({
+        ...data,
+        lastUpdated: new Date()
+      })
+      .returning();
+    
+    return created;
+  }
+}
+
+// Use the DatabaseStorage implementation with PostgreSQL
+export const storage = new DatabaseStorage();
