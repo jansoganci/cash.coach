@@ -35,9 +35,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-16 w-16">
-            <DollarSpinner size="xl" variant="primary" />
-          </div>
+          <div className="h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
           <p className="text-gray-500">Loading your financial data...</p>
         </div>
       </div>
