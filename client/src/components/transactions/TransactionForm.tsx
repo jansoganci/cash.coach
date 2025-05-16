@@ -64,6 +64,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       notes: initialData.notes || '',
       currency: initialData.currency || user?.preferredCurrency || 'USD',
       transactionType: initialData.isIncome ? 'income' : 'expense',
+      isRecurring: initialData.isRecurring || false,
+      frequency: initialData.frequency || undefined,
+      endDate: initialData.endDate ? new Date(initialData.endDate).toISOString().split('T')[0] : undefined,
+      dayOfWeek: initialData.dayOfWeek?.toString() || undefined,
+      dayOfMonth: initialData.dayOfMonth?.toString() || undefined,
+      customDays: initialData.customDays?.toString() || undefined,
     } : {
       description: '',
       amount: '',
@@ -72,6 +78,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       notes: '',
       currency: user?.preferredCurrency || 'USD',
       transactionType: defaultType,
+      isRecurring: false,
+      frequency: undefined,
+      endDate: undefined,
+      dayOfWeek: undefined,
+      dayOfMonth: undefined,
+      customDays: undefined,
     },
   });
 
@@ -86,7 +98,26 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         notes: values.notes,
         currency: values.currency,
         isIncome: values.transactionType === 'income' ? 1 : 0,
+        // Recurring transaction fields
+        isRecurring: values.isRecurring
       };
+      
+      // Add frequency-specific fields if this is a recurring transaction
+      if (values.isRecurring && values.frequency) {
+        Object.assign(payload, {
+          frequency: values.frequency,
+          endDate: values.endDate ? new Date(values.endDate) : undefined
+        });
+        
+        // Add specific frequency parameters
+        if (values.frequency === 'weekly' && values.dayOfWeek) {
+          payload.dayOfWeek = parseInt(values.dayOfWeek);
+        } else if (values.frequency === 'monthly' && values.dayOfMonth) {
+          payload.dayOfMonth = parseInt(values.dayOfMonth);
+        } else if (values.frequency === 'custom' && values.customDays) {
+          payload.customDays = parseInt(values.customDays);
+        }
+      }
       
       const url = initialData 
         ? `/api/transactions/${initialData.id}` 
