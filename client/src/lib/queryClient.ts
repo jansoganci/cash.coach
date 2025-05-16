@@ -1,5 +1,6 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
-import { getToken, addAuthHeader } from "@/utils/auth";
+import { getToken } from "@/utils/auth";
+import { authenticatedFetch } from "./apiClient";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -13,17 +14,15 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  // Set basic headers for content type
-  let headers: HeadersInit = data ? { "Content-Type": "application/json" } : {};
-  
-  // Add authorization header if token exists
-  headers = addAuthHeader(headers);
-  
-  const res = await fetch(url, {
+  // Set up the request options
+  const options: RequestInit = {
     method,
-    headers,
+    headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
-  });
+  };
+  
+  // Use our authenticated fetch utility
+  const res = await authenticatedFetch(url, options);
 
   await throwIfResNotOk(res);
   return res;
@@ -35,14 +34,10 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    // Use our auth utility to add auth headers
-    const headers = addAuthHeader();
-    
+    // Use our authenticated fetch utility
     console.log(`API Request to ${queryKey[0]} with token: ${getToken() ? 'present' : 'missing'}`);
     
-    const res = await fetch(queryKey[0] as string, {
-      headers
-    });
+    const res = await authenticatedFetch(queryKey[0] as string);
 
     if (res.status === 401) {
       // Log auth failure

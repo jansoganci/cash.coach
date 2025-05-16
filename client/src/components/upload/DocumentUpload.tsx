@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { uploadFormData } from '@/lib/apiClient';
 import { getToken } from '@/utils/auth';
 
 const DocumentUpload: React.FC = () => {
@@ -20,54 +21,9 @@ const DocumentUpload: React.FC = () => {
       const formData = new FormData();
       formData.append('file', file);
       
-      return new Promise<any>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        
-        xhr.open('POST', '/api/documents/upload');
-        xhr.withCredentials = true;
-        
-        // Add authorization header with JWT token
-        const token = getToken();
-        if (token) {
-          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-          console.log('Auth token added to document upload request');
-        } else {
-          console.error('No authentication token found');
-          reject(new Error('Authentication required'));
-          return;
-        }
-        
-        // Track upload progress
-        xhr.upload.addEventListener('progress', (event) => {
-          if (event.lengthComputable) {
-            const progress = Math.round((event.loaded / event.total) * 100);
-            setUploadProgress(progress);
-          }
-        });
-        
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const response = JSON.parse(xhr.responseText);
-              resolve(response);
-            } catch (err) {
-              reject(new Error('Failed to parse server response'));
-            }
-          } else {
-            try {
-              const errorResponse = JSON.parse(xhr.responseText);
-              reject(new Error(errorResponse.message || 'Upload failed'));
-            } catch (err) {
-              reject(new Error(`Upload failed with status ${xhr.status}`));
-            }
-          }
-        };
-        
-        xhr.onerror = () => {
-          reject(new Error('Network error during upload'));
-        };
-        
-        xhr.send(formData);
+      // Use the uploadFormData utility to handle file uploads with auth token
+      return uploadFormData('/api/documents/upload', formData, (progress) => {
+        setUploadProgress(progress);
       });
     },
     onSuccess: (data) => {
