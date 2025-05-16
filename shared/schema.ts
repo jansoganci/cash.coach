@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, doublePrecision, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, doublePrecision, json, boolean, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -79,6 +79,35 @@ export const insertExchangeRateSchema = createInsertSchema(exchangeRates).omit({
   id: true,
 });
 
+// Recurring Transaction model
+export const recurringTransactions = pgTable("recurring_transactions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  description: text("description").notNull(),
+  amount: doublePrecision("amount").notNull(),
+  categoryId: integer("category_id"),
+  currency: text("currency").default("USD").notNull(),
+  notes: text("notes"),
+  isIncome: integer("is_income").default(0).notNull(),
+  
+  // Recurrence specific fields
+  frequency: varchar("frequency", { length: 20 }).notNull(), // daily, weekly, monthly, custom
+  startDate: timestamp("start_date").defaultNow().notNull(),
+  endDate: timestamp("end_date"), // nullable - if not set, recurs indefinitely
+  dayOfWeek: integer("day_of_week"), // 0-6 for weekly recurrence (0 = Sunday)
+  dayOfMonth: integer("day_of_month"), // 1-31 for monthly recurrence
+  customDays: integer("custom_days"), // For custom X days frequency
+  lastGeneratedDate: timestamp("last_generated_date"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertRecurringTransactionSchema = createInsertSchema(recurringTransactions).omit({
+  id: true,
+  lastGeneratedDate: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -94,6 +123,9 @@ export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 
 export type ExchangeRate = typeof exchangeRates.$inferSelect;
 export type InsertExchangeRate = z.infer<typeof insertExchangeRateSchema>;
+
+export type RecurringTransaction = typeof recurringTransactions.$inferSelect;
+export type InsertRecurringTransaction = z.infer<typeof insertRecurringTransactionSchema>;
 
 // Default categories
 export const DEFAULT_CATEGORIES = [

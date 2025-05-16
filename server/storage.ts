@@ -4,6 +4,7 @@ import {
   transactions,
   documents,
   exchangeRates,
+  recurringTransactions,
   type User,
   type InsertUser,
   type Category,
@@ -14,6 +15,8 @@ import {
   type InsertDocument,
   type ExchangeRate,
   type InsertExchangeRate,
+  type RecurringTransaction,
+  type InsertRecurringTransaction,
   DEFAULT_CATEGORIES
 } from "@shared/schema";
 
@@ -38,6 +41,14 @@ export interface IStorage {
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
   updateTransaction(id: number, transactionData: Partial<Transaction>): Promise<Transaction | undefined>;
   deleteTransaction(id: number): Promise<boolean>;
+  
+  // Recurring Transaction operations
+  getRecurringTransactions(userId: number): Promise<RecurringTransaction[]>;
+  getRecurringTransactionById(id: number): Promise<RecurringTransaction | undefined>;
+  createRecurringTransaction(recurringTransaction: InsertRecurringTransaction): Promise<RecurringTransaction>;
+  updateRecurringTransaction(id: number, data: Partial<RecurringTransaction>): Promise<RecurringTransaction | undefined>;
+  deleteRecurringTransaction(id: number): Promise<boolean>;
+  processRecurringTransactions(): Promise<number>; // Returns number of transactions generated
   getRecentTransactions(userId: number, limit: number): Promise<Transaction[]>;
   getMonthlySpending(userId: number, currency?: string): Promise<number>;
   getMonthlyIncome(userId: number, currency?: string): Promise<number>;
