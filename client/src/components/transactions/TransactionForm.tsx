@@ -341,6 +341,164 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           )}
         />
         
+        {/* Recurring Transaction Section */}
+        <div className="border-t border-gray-200 pt-4 mt-2">
+          <FormField
+            control={form.control}
+            name="isRecurring"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 mb-4">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>{t('transactions.makeRecurring')}</FormLabel>
+                  <p className="text-sm text-gray-500">
+                    {t('transactions.recurringDescription')}
+                  </p>
+                </div>
+              </FormItem>
+            )}
+          />
+
+          {form.watch('isRecurring') && (
+            <div className="border border-gray-200 rounded-md p-4 mb-4 bg-gray-50">
+              <h3 className="text-sm font-medium mb-3">{t('transactions.recurringOptions')}</h3>
+              <div className="space-y-4">
+                {/* Frequency selection */}
+                <FormField
+                  control={form.control}
+                  name="frequency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('transactions.frequency')}</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t('transactions.selectFrequency')} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="daily">{t('transactions.daily')}</SelectItem>
+                          <SelectItem value="weekly">{t('transactions.weekly')}</SelectItem>
+                          <SelectItem value="monthly">{t('transactions.monthly')}</SelectItem>
+                          <SelectItem value="custom">{t('transactions.custom')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Day of Week (for weekly frequency) */}
+                {form.watch('frequency') === 'weekly' && (
+                  <FormField
+                    control={form.control}
+                    name="dayOfWeek"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('transactions.dayOfWeek')}</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder={t('transactions.selectDay')} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="0">{t('transactions.sunday')}</SelectItem>
+                            <SelectItem value="1">{t('transactions.monday')}</SelectItem>
+                            <SelectItem value="2">{t('transactions.tuesday')}</SelectItem>
+                            <SelectItem value="3">{t('transactions.wednesday')}</SelectItem>
+                            <SelectItem value="4">{t('transactions.thursday')}</SelectItem>
+                            <SelectItem value="5">{t('transactions.friday')}</SelectItem>
+                            <SelectItem value="6">{t('transactions.saturday')}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {/* Day of Month (for monthly frequency) */}
+                {form.watch('frequency') === 'monthly' && (
+                  <FormField
+                    control={form.control}
+                    name="dayOfMonth"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('transactions.dayOfMonth')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="31"
+                            {...field}
+                            placeholder="1-31"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {/* Custom days interval (for custom frequency) */}
+                {form.watch('frequency') === 'custom' && (
+                  <FormField
+                    control={form.control}
+                    name="customDays"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('transactions.everyXDays')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="1"
+                            {...field}
+                            placeholder={t('transactions.daysInterval')}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {/* End date (optional for all recurring) */}
+                <FormField
+                  control={form.control}
+                  name="endDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {t('transactions.endDate')} 
+                        <span className="text-gray-500 text-sm ml-1">({t('transactions.optional')})</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+        
         <div className="flex justify-end space-x-3 pt-2">
           <Button
             type="button"
