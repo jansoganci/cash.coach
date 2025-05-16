@@ -61,6 +61,16 @@ const Sidebar: React.FC = () => {
               <span>{t('sidebar.analytics')}</span>
             </div>
           </Link>
+          <Link href="/recurring">
+            <div className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg ${
+              isActive('/recurring') 
+                ? 'bg-primary-50 text-primary-700' 
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}>
+              <i className="ri-repeat-line mr-3 text-lg"></i>
+              <span>{t('sidebar.recurring')}</span>
+            </div>
+          </Link>
 
           <div className="pt-4 mt-4 border-t border-gray-200">
             <h3 className="px-3 text-xs font-medium text-gray-500 uppercase tracking-wider">

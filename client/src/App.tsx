@@ -14,6 +14,7 @@ import Expenses from "@/pages/expenses";
 import Transactions from "@/pages/transactions";
 import Analytics from "@/pages/analytics";
 import SpinnerDemo from "@/pages/spinner-demo";
+import RecurringPage from "@/pages/recurring";
 import { useAuth } from "./hooks/useAuth";
 import { Suspense, lazy } from "react";
 import MobileNav from "./components/layout/MobileNav";
@@ -98,6 +99,11 @@ function AppContent() {
           <Route path="/analytics">
             <ProtectedRoute>
               <Analytics />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/recurring">
+            <ProtectedRoute>
+              <RecurringPage />
             </ProtectedRoute>
           </Route>
           <Route path="/spinner-demo">

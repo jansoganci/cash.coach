@@ -19,7 +19,27 @@ const RecurringTransactions: React.FC<RecurringTransactionProps> = ({ categoryNa
   const { t } = useTranslation();
   const { toast } = useToast();
 
-  const { data: recurringTransactions = [], isLoading, error } = useQuery({
+  // Define the recurring transaction type
+  interface RecurringTransaction {
+    id: number;
+    userId: number;
+    description: string;
+    amount: number;
+    isIncome: number;
+    currency: string;
+    categoryId?: number;
+    notes?: string;
+    frequency: 'daily' | 'weekly' | 'monthly' | 'custom';
+    startDate: string;
+    endDate?: string;
+    dayOfWeek?: number;
+    dayOfMonth?: number;
+    customDays?: number;
+    isActive: boolean;
+    lastGeneratedDate?: string;
+  }
+
+  const { data: recurringTransactions = [] as RecurringTransaction[], isLoading, error } = useQuery<RecurringTransaction[]>({
     queryKey: ['/api/recurring-transactions'],
     enabled: true,
   });
