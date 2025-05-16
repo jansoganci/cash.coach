@@ -53,6 +53,7 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { toast } = useToast();
   const [error, setError] = useState<Error | null>(null);
+  const [userState, setUserState] = useState<User | null>(null);
   
   // Check if there's a token in localStorage on component mount
   useEffect(() => {
@@ -76,8 +77,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refetchInterval: false,
     queryFn: async ({ queryKey }) => {
       try {
-        // Token will be automatically added to headers by the queryFn in queryClient.ts
-        const res = await fetch(queryKey[0] as string);
+        // Manually add token to this request
+        const token = localStorage.getItem(TOKEN_KEY);
+        const headers: HeadersInit = token ? { "Authorization": `Bearer ${token}` } : {};
+        
+        const res = await fetch(queryKey[0] as string, {
+          headers
+        });
         
         if (res.status === 401) {
           // If unauthorized, clear token
@@ -122,10 +128,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (userData.token) {
         localStorage.setItem(TOKEN_KEY, userData.token);
         console.log("JWT token stored successfully");
+        
+        // Set the user data directly instead of using refetch
+        // This avoids the race condition where refetch runs before
+        // the token is properly stored/used
+        queryClient.setQueryData(["/api/auth/me"], userData);
       }
-      
-      // Refresh user data
-      refetch();
       
       toast({
         title: "Login successful",

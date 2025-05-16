@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { getToken, addAuthHeader } from "@/utils/auth";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -12,14 +13,11 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  // Get token from localStorage
-  const token = localStorage.getItem("fintrack_auth_token");
+  // Set basic headers for content type
+  let headers: HeadersInit = data ? { "Content-Type": "application/json" } : {};
   
-  // Set headers
-  const headers: HeadersInit = {
-    ...(data ? { "Content-Type": "application/json" } : {}),
-    ...(token ? { "Authorization": `Bearer ${token}` } : {})
-  };
+  // Add authorization header if token exists
+  headers = addAuthHeader(headers);
   
   const res = await fetch(url, {
     method,
@@ -43,9 +41,10 @@ export const getQueryFn: <T>(options: {
     // Set headers with authorization token if available
     const headers: HeadersInit = token ? { "Authorization": `Bearer ${token}` } : {};
     
+    console.log(`API Request to ${queryKey[0]} with token: ${token ? 'present' : 'missing'}`);
+    
     const res = await fetch(queryKey[0] as string, {
-      headers,
-      // Remove credentials since we're using token-based auth
+      headers
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

@@ -10,6 +10,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { queryClient } from '@/lib/queryClient';
+import { setToken } from '@/utils/auth';
 
 const formSchema = z.object({
   username: z.string().min(1, { message: 'Username is required' }),
@@ -39,14 +41,36 @@ const Login: React.FC = () => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await login(values.username, values.password);
-      toast({
-        title: "Login successful",
-        description: "Redirecting to dashboard...",
+      // Direct fetch to login API endpoint
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values)
       });
       
-      // With JWT, we can redirect immediately
-      setLocation('/');
+      if (!response.ok) {
+        throw new Error('Login failed');
+      }
+      
+      // Get user data and token
+      const userData = await response.json();
+      
+      // Store token in localStorage using our utility
+      if (userData.token) {
+        setToken(userData.token);
+        console.log('Token saved successfully:', userData.token.substring(0, 10) + '...');
+        
+        // Refresh query cache with user data
+        queryClient.setQueryData(['/api/auth/me'], userData);
+        
+        toast({
+          title: "Login successful",
+          description: "Redirecting to dashboard..."
+        });
+        
+        // Redirect to dashboard
+        setLocation('/');
+      }
     } catch (error) {
       toast({
         title: "Login failed",
