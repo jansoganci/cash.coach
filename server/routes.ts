@@ -94,7 +94,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Authenticated user with ID: ${req.session.userId}`);
       return next();
     }
+    
+    // Debug request details to help diagnose the issue
     console.log("Authentication failed - no session or userId");
+    console.log("Request cookies:", req.headers.cookie);
+    
     res.status(401).json({ message: "Unauthorized" });
   };
 
@@ -193,19 +197,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  apiRouter.get("/auth/me", isAuthenticated, async (req: Request, res: Response) => {
+  apiRouter.get("/auth/me", async (req: Request, res: Response) => {
     try {
-      const userId = req.session.userId;
+      // If no user ID in session, return unauthorized
+      if (!req.session || !req.session.userId) {
+        console.log("No active session found");
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      // Log that we have a session
+      console.log(`Found session with user ID: ${req.session.userId}`);
+      
+      // Get user data from storage with proper type assertion
+      // This is safe because we've already checked that userId exists
+      const userId = req.session.userId as number;
       const user = await storage.getUser(userId);
       
       if (!user) {
+        console.log(`User with ID ${userId} not found in database`);
         return res.status(404).json({ message: "User not found" });
       }
       
       // Return user without password
       const { password, ...userWithoutPassword } = user;
+      console.log(`Successfully retrieved user: ${user.username}`);
       res.status(200).json(userWithoutPassword);
     } catch (error) {
+      console.error("Error in /auth/me endpoint:", error);
       res.status(500).json({ message: "Something went wrong" });
     }
   });

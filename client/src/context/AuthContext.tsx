@@ -77,14 +77,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   });
 
-  // Login mutation
+  // Login mutation with improved session handling
   const loginMutation = useMutation({
     mutationFn: async (credentials: { username: string; password: string }) => {
-      const res = await apiRequest("POST", "/api/auth/login", credentials);
+      // Use direct fetch with credentials included instead of apiRequest
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(credentials),
+        credentials: "include" // Important for cookies to be sent/received
+      });
+      
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Login failed");
+      }
+      
       return res.json();
     },
     onSuccess: (data) => {
+      // Update cached user data
       queryClient.setQueryData(["/api/auth/me"], data);
+      
+      // Force refetch to ensure we have the latest session data
+      refetch();
+      
       toast({
         title: "Logged in successfully",
         description: `Welcome back, ${data.username}!`,

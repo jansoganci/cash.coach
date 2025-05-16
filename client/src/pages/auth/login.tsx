@@ -44,10 +44,18 @@ const Login: React.FC = () => {
         title: "Login successful",
         description: "Redirecting to dashboard...",
       });
-      // Force redirect to dashboard
-      window.location.href = '/';
+      
+      // Wait a moment for session to be established
+      setTimeout(() => {
+        // Force hard redirect to dashboard to ensure clean state
+        window.location.href = '/';
+      }, 500);
     } catch (error) {
-      // Error handling is done in AuthContext
+      toast({
+        title: "Login failed",
+        description: "Please check your username and password",
+        variant: "destructive",
+      });
     }
   };
 
