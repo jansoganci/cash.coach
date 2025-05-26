@@ -153,6 +153,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(200).json({ message: "Logged out successfully" });
   });
 
+  // Forgot password endpoint
+  apiRouter.post("/auth/forgot-password", async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      
+      if (!user) {
+        // Don't reveal if email exists or not for security
+        return res.status(200).json({ 
+          message: "If an account with that email exists, we've sent password reset instructions" 
+        });
+      }
+
+      // Generate a reset token
+      const resetToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      
+      // Store the reset token (in production, this would be in a database)
+      global.passwordResetTokens = global.passwordResetTokens || {};
+      global.passwordResetTokens[resetToken] = {
+        userId: user.id,
+        email: user.email,
+        expires: Date.now() + 3600000 // 1 hour
+      };
+
+      res.status(200).json({ 
+        message: "Password reset instructions have been sent",
+        resetToken // In production, this would be sent via email
+      });
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      res.status(500).json({ message: "Something went wrong" });
+    }
+  });
+
+  // Reset password endpoint
+  apiRouter.post("/auth/reset-password", async (req: Request, res: Response) => {
+    try {
+      const { token, newPassword } = req.body;
+      
+      if (!token || !newPassword) {
+        return res.status(400).json({ message: "Token and new password are required" });
+      }
+
+      const resetData = global.passwordResetTokens?.[token];
+      
+      if (!resetData || resetData.expires < Date.now()) {
+        return res.status(400).json({ message: "Invalid or expired reset token" });
+      }
+
+      // Hash the new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      
+      // Update the user's password
+      await storage.updateUser(resetData.userId, { password: hashedPassword });
+      
+      // Delete the used token
+      delete global.passwordResetTokens[token];
+
+      res.status(200).json({ message: "Password reset successfully" });
+    } catch (error) {
+      console.error("Reset password error:", error);
+      res.status(500).json({ message: "Something went wrong" });
+    }
+  });
+
   apiRouter.get("/auth/me", authenticateJWT, async (req: Request, res: Response) => {
     try {
       // user is attached to req by authenticateJWT middleware

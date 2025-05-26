@@ -1,0 +1,409 @@
+rest-express@1.0.0 dev
+2:24:46 PM [express] serving on port 5000s
+Browserslist: browsers data (caniuse-lite) is 7 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+GET /api/auth/me
+No auth token found in request
+2:25:00 PM [express] GET /api/auth/me 401 in 3ms :: {"message":"Unauthorized"}
+GET /api/auth/me
+No auth token found in request
+2:25:00 PM [express] GET /api/auth/me 401 in 1ms :: {"message":"Unauthorized"}
+POST /api/auth/login
+Login error: error: Control plane request failed: endpoint is disabled
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getUserByUsername (/home/runner/workspace/server/storage.ts:315:20)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:121:20) {
+  length: 71,
+  severity: 'ERROR',
+  code: 'XX000',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: undefined,
+  line: undefined,
+  routine: undefined
+}
+2:25:17 PM [express] POST /api/auth/login 500 in 295ms :: {"message":"Something went wrong"}
+POST /api/auth/register
+Registration error: error: Control plane request failed: endpoint is disabled
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getUserByUsername (/home/runner/workspace/server/storage.ts:315:20)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:71:28) {
+  length: 71,
+  severity: 'ERROR',
+  code: 'XX000',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: undefined,
+  line: undefined,
+  routine: undefined
+}
+2:25:36 PM [express] POST /api/auth/register 500 in 267ms :: {"message":"Something went wrong"}
+POST /api/auth/register
+Registration error: error: Control plane request failed: endpoint is disabled
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getUserByUsername (/home/runner/workspace/server/storage.ts:315:20)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:71:28) {
+  length: 71,
+  severity: 'ERROR',
+  code: 'XX000',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: undefined,
+  line: undefined,
+  routine: undefined
+}
+2:25:50 PM [express] POST /api/auth/register 500 in 287ms :: {"message":"Something went wrong"}
+POST /api/auth/register
+Registration error: error: Control plane request failed: endpoint is disabled
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getUserByUsername (/home/runner/workspace/server/storage.ts:315:20)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:71:28) {
+  length: 71,
+  severity: 'ERROR',
+  code: 'XX000',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: undefined,
+  line: undefined,
+  routine: undefined
+}
+2:26:00 PM [express] POST /api/auth/register 500 in 242ms :: {"message":"Something went wrong"}
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+2:24:46 PM [express] serving on port 5000
+Browserslist: browsers data (caniuse-lite) is 7 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+GET /api/auth/me
+No auth token found in request
+2:25:00 PM [express] GET /api/auth/me 401 in 3ms :: {"message":"Unauthorized"}
+GET /api/auth/me
+No auth token found in request
+2:25:00 PM [express] GET /api/auth/me 401 in 1ms :: {"message":"Unauthorized"}
+POST /api/auth/login
+Login error: error: Control plane request failed: endpoint is disabled
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getUserByUsername (/home/runner/workspace/server/storage.ts:315:20)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:121:20) {
+  length: 71,
+  severity: 'ERROR',
+  code: 'XX000',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: undefined,
+  line: undefined,
+  routine: undefined
+}
+2:25:17 PM [express] POST /api/auth/login 500 in 295ms :: {"message":"Something went wrong"}
+POST /api/auth/register
+Registration error: error: Control plane request failed: endpoint is disabled
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getUserByUsername (/home/runner/workspace/server/storage.ts:315:20)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:71:28) {
+  length: 71,
+  severity: 'ERROR',
+  code: 'XX000',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: undefined,
+  line: undefined,
+  routine: undefined
+}
+2:25:36 PM [express] POST /api/auth/register 500 in 267ms :: {"message":"Something went wrong"}
+POST /api/auth/register
+Registration error: error: Control plane request failed: endpoint is disabled
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getUserByUsername (/home/runner/workspace/server/storage.ts:315:20)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:71:28) {
+  length: 71,
+  severity: 'ERROR',
+  code: 'XX000',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: undefined,
+  line: undefined,
+  routine: undefined
+}
+2:25:50 PM [express] POST /api/auth/register 500 in 287ms :: {"message":"Something went wrong"}
+POST /api/auth/register
+Registration error: error: Control plane request failed: endpoint is disabled
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getUserByUsername (/home/runner/workspace/server/storage.ts:315:20)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:71:28) {
+  length: 71,
+  severity: 'ERROR',
+  code: 'XX000',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: undefined,
+  line: undefined,
+  routine: undefined
+}
+2:26:00 PM [express] POST /api/auth/register 500 in 242ms :: {"message":"Something went wrong"}
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+2:24:46 PM [express] serving on port 5000
+Browserslist: browsers data (caniuse-lite) is 7 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+GET /api/auth/me
+No auth token found in request
+2:25:00 PM [express] GET /api/auth/me 401 in 3ms :: {"message":"Unauthorized"}
+GET /api/auth/me
+No auth token found in request
+2:25:00 PM [express] GET /api/auth/me 401 in 1ms :: {"message":"Unauthorized"}
+POST /api/auth/login
+Login error: error: Control plane request failed: endpoint is disabled
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getUserByUsername (/home/runner/workspace/server/storage.ts:315:20)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:121:20) {
+  length: 71,
+  severity: 'ERROR',
+  code: 'XX000',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: undefined,
+  line: undefined,
+  routine: undefined
+}
+2:25:17 PM [express] POST /api/auth/login 500 in 295ms :: {"message":"Something went wrong"}
+POST /api/auth/register
+Registration error: error: Control plane request failed: endpoint is disabled
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getUserByUsername (/home/runner/workspace/server/storage.ts:315:20)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:71:28) {
+  length: 71,
+  severity: 'ERROR',
+  code: 'XX000',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: undefined,
+  line: undefined,
+  routine: undefined
+}
+2:25:36 PM [express] POST /api/auth/register 500 in 267ms :: {"message":"Something went wrong"}
+POST /api/auth/register
+Registration error: error: Control plane request failed: endpoint is disabled
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getUserByUsername (/home/runner/workspace/server/storage.ts:315:20)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:71:28) {
+  length: 71,
+  severity: 'ERROR',
+  code: 'XX000',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: undefined,
+  line: undefined,
+  routine: undefined
+}
+2:25:50 PM [express] POST /api/auth/register 500 in 287ms :: {"message":"Something went wrong"}
+POST /api/auth/register
+Registration error: error: Control plane request failed: endpoint is disabled
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getUserByUsername (/home/runner/workspace/server/storage.ts:315:20)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:71:28) {
+  length: 71,
+  severity: 'ERROR',
+  code: 'XX000',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: undefined,
+  line: undefined,
+  routine: undefined
+}
+2:26:00 PM [express] POST /api/auth/register 500 in 242ms :: {"message":"Something went wrong"}
+GET /api/auth/me
+No auth token found in request
+2:51:28 PM [express] GET /api/auth/me 401 in 1ms :: {"message":"Unauthorized"}
+GET /api/auth/me
+No auth token found in request
+2:51:28 PM [express] GET /api/auth/me 401 in 1ms :: {"message":"Unauthorized"}
+POST /api/auth/login
+Login error: error: Control plane request failed: endpoint is disabled
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getUserByUsername (/home/runner/workspace/server/storage.ts:315:20)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:121:20) {
+  length: 71,
+  severity: 'ERROR',
+  code: 'XX000',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: undefined,
+  line: undefined,
+  routine: undefined
+}
+2:58:42 PM [express] POST /api/auth/login 500 in 282ms :: {"message":"Something went wrong"}
+POST /api/auth/login
+Login error: error: Control plane request failed: endpoint is disabled
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getUserByUsername (/home/runner/workspace/server/storage.ts:315:20)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:121:20) {
+  length: 71,
+  severity: 'ERROR',
+  code: 'XX000',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: undefined,
+  line: undefined,
+  routine: undefined
+}
+3:00:35 PM [express] POST /api/auth/login 500 in 270ms :: {"message":"Something went wrong"}
