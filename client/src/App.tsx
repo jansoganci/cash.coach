@@ -9,6 +9,8 @@ import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import Login from "@/pages/auth/login";
 import Register from "@/pages/auth/register";
+import ForgotPassword from "@/pages/auth/forgot-password";
+import ResetPassword from "@/pages/auth/reset-password";
 import Upload from "@/pages/upload";
 import Expenses from "@/pages/expenses";
 import Transactions from "@/pages/transactions";
@@ -56,13 +58,15 @@ function AppContent() {
   const [location] = useLocation();
   
   // Don't show layout for auth pages
-  const isAuthPage = location === "/login" || location === "/register";
+  const isAuthPage = location === "/login" || location === "/register" || location === "/forgot-password" || location.startsWith("/reset-password");
 
   if (isAuthPage) {
     return (
       <Switch>
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
+        <Route path="/forgot-password" component={ForgotPassword} />
+        <Route path="/reset-password" component={ResetPassword} />
         <Route component={NotFound} />
       </Switch>
     );

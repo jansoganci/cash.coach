@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'wouter';
+import { useLocation, Link } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -121,6 +121,13 @@ const Login: React.FC = () => {
                   </FormItem>
                 )}
               />
+              <div className="flex items-center justify-between">
+                <Link href="/forgot-password">
+                  <Button variant="link" className="p-0 text-sm">
+                    {t('auth.forgotPassword')}
+                  </Button>
+                </Link>
+              </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <><i className="ri-loader-4-line animate-spin mr-2"></i> {t('auth.loggingIn')}</>
