@@ -30,6 +30,7 @@ export interface IStorage {
   updateUser(id: number, userData: Partial<User>): Promise<User | undefined>;
   logLogin(userId: number, ip: string): Promise<void>;
   blacklistToken(userId: number, token: string): Promise<void>;
+  getLoginLogs(): Promise<Array<{ userId: number; ip: string; timestamp: string }>>;
   
   // Category operations
   getCategories(userId: number): Promise<Category[]>;
@@ -98,6 +99,14 @@ export class MemStorage implements IStorage {
       timestamp: new Date()
     });
     console.log(`Blacklisted token for user ${userId}`);
+  }
+
+  async getLoginLogs(): Promise<Array<{ userId: number; ip: string; timestamp: string }>> {
+    return this.loginLogs.map(log => ({
+      userId: log.userId,
+      ip: log.ip,
+      timestamp: log.timestamp.toISOString(),
+    }));
   }
 
   constructor() {
@@ -520,6 +529,11 @@ export class DatabaseStorage implements IStorage {
 
   async blacklistToken(userId: number, token: string): Promise<void> {
     await db.execute(sql`INSERT INTO blacklisted_tokens (user_id, token) VALUES (${userId}, ${token})`);
+  }
+
+  async getLoginLogs(): Promise<Array<{ userId: number; ip: string; timestamp: string }>> {
+    const result = await db.execute(sql`SELECT user_id as userId, ip_address as ip, timestamp FROM login_logs ORDER BY timestamp DESC`);
+    return result.rows as Array<{ userId: number; ip: string; timestamp: string }>;
   }
 
   async getUser(id: number): Promise<User | undefined> {

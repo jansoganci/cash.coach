@@ -790,6 +790,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
+  // Admin routes
+  apiRouter.get("/admin/login-logs", authenticateJWT, async (req: Request, res: Response) => {
+    try {
+      const logs = await storage.getLoginLogs();
+      res.status(200).json(logs);
+    } catch (error) {
+      console.error("Error fetching login logs:", error);
+      res.status(500).json({ message: "Something went wrong" });
+    }
+  });
+
   // Create HTTP server
   const httpServer = createServer(app);
   return httpServer;
