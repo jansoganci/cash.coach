@@ -1,9 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { storage } from './storage';
+import { db } from './db';
+import { sql } from 'drizzle-orm';
 
 // Secret key for signing JWT tokens
-const JWT_SECRET = process.env.JWT_SECRET || 'fintrack-jwt-secret-key-change-in-production';
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET is required but not set in environment variables.");
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Token expiration (24 hours)
 const TOKEN_EXPIRATION = '24h';
@@ -40,6 +45,13 @@ export const authenticateJWT = async (req: Request, res: Response, next: NextFun
   if (!token) {
     console.log('No auth token found in request');
     return res.status(401).json({ message: 'Unauthorized' });
+  }
+  
+  // Check if token is blacklisted
+  const result = await db.execute(sql`SELECT 1 FROM blacklisted_tokens WHERE token = ${token} LIMIT 1`);
+  if (result.rows.length > 0) {
+    console.log('Token has been blacklisted');
+    return res.status(401).json({ message: 'Token has been invalidated' });
   }
   
   const decoded = verifyToken(token);

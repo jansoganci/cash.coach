@@ -12,10 +12,12 @@ import {
   insertCategorySchema, 
   insertTransactionSchema, 
   insertDocumentSchema,
-  DEFAULT_CATEGORIES
-} from "@shared/schema";
+  DEFAULT_CATEGORIES,
+  type RecurringTransaction
+} from "../shared/schema";
 import { processDocument } from "./services/ocr";
 import { convertCurrency, formatCurrency } from "./services/currency";
+import { loginRateLimiter } from "./security/rateLimiter";
 
 // Upload file settings
 const upload = multer({
@@ -113,7 +115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  apiRouter.post("/auth/login", async (req: Request, res: Response) => {
+  apiRouter.post("/auth/login", loginRateLimiter, async (req: Request, res: Response) => {
     try {
       const { username, password } = req.body;
       
@@ -133,6 +135,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = generateToken(user.id);
       
       console.log(`User ${user.username} logged in successfully`);
+      
+      // Log user login with IP address
+      await storage.logLogin(user.id, req.ip || '127.0.0.1');
+      
       res.status(200).json({
         id: user.id,
         username: user.username,
@@ -148,9 +154,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  apiRouter.post("/auth/logout", (req: Request, res: Response) => {
-    // With JWT, the client is responsible for removing the token
-    res.status(200).json({ message: "Logged out successfully" });
+  apiRouter.post("/auth/logout", authenticateJWT, async (req: Request, res: Response) => {
+    try {
+      // Extract the JWT token from the Authorization header
+      const token = req.headers.authorization?.split(" ")[1];
+      
+      // If token exists, blacklist it
+      if (token && req.user) {
+        await storage.blacklistToken((req.user as any).id, token);
+      }
+      
+      res.status(200).json({ message: "Logged out successfully" });
+    } catch (error) {
+      console.error("Logout error:", error);
+      res.status(200).json({ message: "Logged out successfully" });
+    }
   });
 
   // Forgot password endpoint

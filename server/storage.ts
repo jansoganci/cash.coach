@@ -18,7 +18,7 @@ import {
   type RecurringTransaction,
   type InsertRecurringTransaction,
   DEFAULT_CATEGORIES
-} from "@shared/schema";
+} from "../shared/schema";
 
 // Interface for storage operations
 export interface IStorage {
@@ -28,6 +28,8 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, userData: Partial<User>): Promise<User | undefined>;
+  logLogin(userId: number, ip: string): Promise<void>;
+  blacklistToken(userId: number, token: string): Promise<void>;
   
   // Category operations
   getCategories(userId: number): Promise<Category[]>;
@@ -70,6 +72,8 @@ export class MemStorage implements IStorage {
   private documents: Map<number, Document>;
   private exchangeRates: Map<number, ExchangeRate>;
   private recurringTransactions: Map<number, RecurringTransaction>;
+  private loginLogs: Array<{userId: number, ip: string, timestamp: Date}> = [];
+  private blacklistedTokens: Array<{userId: number, token: string, timestamp: Date}> = [];
   
   private currentUserId: number;
   private currentCategoryId: number;
@@ -77,6 +81,24 @@ export class MemStorage implements IStorage {
   private currentDocumentId: number;
   private currentExchangeRateId: number;
   private currentRecurringTransactionId: number;
+
+  async logLogin(userId: number, ip: string): Promise<void> {
+    this.loginLogs.push({
+      userId,
+      ip,
+      timestamp: new Date()
+    });
+    console.log(`Logged login for user ${userId} from IP ${ip}`);
+  }
+
+  async blacklistToken(userId: number, token: string): Promise<void> {
+    this.blacklistedTokens.push({
+      userId,
+      token,
+      timestamp: new Date()
+    });
+    console.log(`Blacklisted token for user ${userId}`);
+  }
 
   constructor() {
     this.users = new Map();
@@ -120,7 +142,10 @@ export class MemStorage implements IStorage {
     const user: User = { 
       ...insertUser, 
       id,
-      createdAt: now
+      createdAt: now,
+      fullName: insertUser.fullName ?? null,
+      preferredCurrency: insertUser.preferredCurrency ?? "USD",
+      preferredLanguage: insertUser.preferredLanguage ?? "en"
     };
     this.users.set(id, user);
     return user;
@@ -150,7 +175,9 @@ export class MemStorage implements IStorage {
     const id = this.currentCategoryId++;
     const category: Category = {
       ...insertCategory,
-      id
+      id,
+      icon: insertCategory.icon ?? "tag",
+      color: insertCategory.color ?? "#3B82F6"
     };
     this.categories.set(id, category);
     return category;
@@ -192,7 +219,13 @@ export class MemStorage implements IStorage {
     const transaction: Transaction = {
       ...insertTransaction,
       id,
-      createdAt: now
+      createdAt: now,
+      date: insertTransaction.date ?? now,
+      categoryId: insertTransaction.categoryId ?? null,
+      currency: insertTransaction.currency ?? "USD",
+      notes: insertTransaction.notes ?? null,
+      isIncome: insertTransaction.isIncome ?? 0,
+      documentId: insertTransaction.documentId ?? null
     };
     this.transactions.set(id, transaction);
     return transaction;
@@ -246,56 +279,231 @@ export class MemStorage implements IStorage {
       .reduce((total, transaction) => total + transaction.amount, 0);
   }
   
+  // Recurring Transaction methods
+  async getRecurringTransactions(userId: number): Promise<RecurringTransaction[]> {
+    return Array.from(this.recurringTransactions.values())
+      .filter(rt => rt.userId === userId && rt.isActive);
+  }
+
+  async getRecurringTransactionById(id: number): Promise<RecurringTransaction | undefined> {
+    return this.recurringTransactions.get(id);
+  }
+
+  async createRecurringTransaction(insertRecurringTransaction: InsertRecurringTransaction): Promise<RecurringTransaction> {
+    const now = new Date();
+    const recurringTransaction: RecurringTransaction = {
+      id: this.currentRecurringTransactionId++,
+      ...insertRecurringTransaction,
+      isActive: true,
+      startDate: insertRecurringTransaction.startDate || now,
+      lastGeneratedDate: null,
+      createdAt: now,
+      categoryId: insertRecurringTransaction.categoryId ?? null,
+      currency: insertRecurringTransaction.currency ?? "USD",
+      notes: insertRecurringTransaction.notes ?? null,
+      isIncome: insertRecurringTransaction.isIncome ?? 0,
+      endDate: insertRecurringTransaction.endDate ?? null,
+      dayOfWeek: insertRecurringTransaction.dayOfWeek ?? null,
+      dayOfMonth: insertRecurringTransaction.dayOfMonth ?? null,
+      customDays: insertRecurringTransaction.customDays ?? null
+    };
+    this.recurringTransactions.set(recurringTransaction.id, recurringTransaction);
+    return recurringTransaction;
+  }
+
+  async updateRecurringTransaction(id: number, data: Partial<RecurringTransaction>): Promise<RecurringTransaction | undefined> {
+    const existing = this.recurringTransactions.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...data };
+    this.recurringTransactions.set(id, updated);
+    return updated;
+  }
+
+  async deleteRecurringTransaction(id: number): Promise<boolean> {
+    return this.recurringTransactions.delete(id);
+  }
+
+  async processRecurringTransactions(): Promise<number> {
+    const now = new Date();
+    let processedCount = 0;
+
+    for (const rt of this.recurringTransactions.values()) {
+      if (!rt.isActive) continue;
+      
+      const lastGenDate = rt.lastGeneratedDate ? new Date(rt.lastGeneratedDate) : new Date(rt.startDate);
+      let datesToProcess: Date[] = [];
+      
+      // Generate dates based on frequency
+      switch (rt.frequency) {
+        case 'daily':
+          datesToProcess = this.getCustomDates(lastGenDate, now, 1);
+          break;
+          
+        case 'weekly':
+          datesToProcess = this.getWeeklyDates(lastGenDate, now, rt.dayOfWeek || 1);
+          break;
+          
+        case 'monthly':
+          datesToProcess = this.getMonthlyDates(lastGenDate, now, rt.dayOfMonth || 1);
+          break;
+          
+        case 'custom':
+          if (rt.customDays) {
+            datesToProcess = this.getCustomDates(lastGenDate, now, rt.customDays);
+          }
+          break;
+      }
+      
+      // Filter out future dates and dates after endDate
+      const validDates = datesToProcess.filter(date => 
+        date <= now && 
+        (!rt.endDate || date <= new Date(rt.endDate))
+      );
+      
+      if (validDates.length > 0) {
+        // Create transactions for each valid date
+        for (const date of validDates) {
+          await this.createTransaction({
+            userId: rt.userId,
+            description: rt.description,
+            amount: rt.amount,
+            date: date,
+            categoryId: rt.categoryId,
+            currency: rt.currency,
+            notes: rt.notes,
+            isIncome: rt.isIncome ? 1 : 0
+          });
+          processedCount++;
+        }
+        
+        // Update last generated date
+        const latestDate = new Date(Math.max(...validDates.map(d => d.getTime())));
+        await this.updateRecurringTransaction(rt.id, { lastGeneratedDate: latestDate });
+      }
+    }
+    
+    return processedCount;
+  }
+
+  // Helper methods for date calculations
+  private isSameDay(date1: Date, date2: Date): boolean {
+    return date1.getFullYear() === date2.getFullYear() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getDate() === date2.getDate();
+  }
+
+  private getDaysDifference(date1: Date, date2: Date): number {
+    const diffTime = Math.abs(date2.getTime() - date1.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }
+
+  private getWeeklyDates(startDate: Date, endDate: Date, dayOfWeek: number = 1): Date[] {
+    const dates: Date[] = [];
+    const current = new Date(startDate);
+    
+    // Find the next occurrence of the specified day of week
+    while (current <= endDate) {
+      if (current.getDay() === dayOfWeek && current > startDate) {
+        dates.push(new Date(current));
+      }
+      current.setDate(current.getDate() + 1);
+    }
+    
+    return dates;
+  }
+
+  private getMonthlyDates(startDate: Date, endDate: Date, dayOfMonth: number = 1): Date[] {
+    const dates: Date[] = [];
+    const current = new Date(startDate);
+    
+    // Move to the next month to avoid processing the start month
+    current.setMonth(current.getMonth() + 1);
+    
+    while (current <= endDate) {
+      // Handle months with fewer days than the target day
+      const daysInMonth = new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate();
+      const targetDay = Math.min(dayOfMonth, daysInMonth);
+      
+      const targetDate = new Date(current.getFullYear(), current.getMonth(), targetDay);
+      if (targetDate > startDate && targetDate <= endDate) {
+        dates.push(new Date(targetDate));
+      }
+      
+      // Move to the first day of the next month
+      current.setMonth(current.getMonth() + 1);
+      current.setDate(1);
+    }
+    
+    return dates;
+  }
+
+  private getCustomDates(startDate: Date, endDate: Date, days: number): Date[] {
+    const dates: Date[] = [];
+    let current = new Date(startDate);
+    
+    // Add the interval days to get to the next occurrence
+    current.setDate(current.getDate() + days);
+    
+    // Add all occurrences until end date
+    while (current <= endDate) {
+      dates.push(new Date(current));
+      current = new Date(current);
+      current.setDate(current.getDate() + days);
+    }
+    
+    return dates;
+  }
+
   // Document methods
   async getDocuments(userId: number): Promise<Document[]> {
-    return Array.from(this.documents.values())
-      .filter((document) => document.userId === userId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return Array.from(this.documents.values()).filter(doc => doc.userId === userId);
   }
-  
+
   async getDocumentById(id: number): Promise<Document | undefined> {
     return this.documents.get(id);
   }
-  
+
   async createDocument(insertDocument: InsertDocument): Promise<Document> {
-    const id = this.currentDocumentId++;
-    const now = new Date();
     const document: Document = {
-      ...insertDocument,
-      id,
-      createdAt: now
+      id: this.currentDocumentId++,
+      userId: insertDocument.userId,
+      filename: insertDocument.filename,
+      fileType: insertDocument.fileType,
+      ocrData: insertDocument.ocrData ?? null,
+      createdAt: new Date()
     };
-    this.documents.set(id, document);
+    this.documents.set(document.id, document);
     return document;
   }
-  
+
   // Exchange rate methods
   async getExchangeRates(): Promise<ExchangeRate | undefined> {
-    // Always return the first exchange rate
-    return this.exchangeRates.get(1);
+    // Return the most recent exchange rates
+    const rates = Array.from(this.exchangeRates.values());
+    return rates[rates.length - 1];
   }
-  
+
   async createOrUpdateExchangeRates(data: InsertExchangeRate): Promise<ExchangeRate> {
-    const now = new Date();
-    const id = 1; // Always use the same ID to replace the existing record
     const exchangeRate: ExchangeRate = {
+      id: this.currentExchangeRateId++,
       ...data,
-      id,
-      lastUpdated: now
+      lastUpdated: new Date()
     };
-    this.exchangeRates.set(id, exchangeRate);
+    this.exchangeRates.set(exchangeRate.id, exchangeRate);
     return exchangeRate;
   }
-  
+
   private initializeExchangeRates() {
+    // Initialize with some default exchange rates
     this.createOrUpdateExchangeRates({
       baseCurrency: 'USD',
       rates: {
         EUR: 0.92,
         GBP: 0.79,
-        JPY: 151.67,
-        CNY: 7.24,
-        USD: 1.0
+        JPY: 149.27,
+        CAD: 1.37,
+        AUD: 1.57
       },
       lastUpdated: new Date()
     });
@@ -306,6 +514,14 @@ import { db } from "./db";
 import { and, eq, desc, gte, sql } from "drizzle-orm";
 
 export class DatabaseStorage implements IStorage {
+  async logLogin(userId: number, ip: string): Promise<void> {
+    await db.execute(sql`INSERT INTO login_logs (user_id, ip_address) VALUES (${userId}, ${ip})`);
+  }
+
+  async blacklistToken(userId: number, token: string): Promise<void> {
+    await db.execute(sql`INSERT INTO blacklisted_tokens (user_id, token) VALUES (${userId}, ${token})`);
+  }
+
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
